@@ -64,40 +64,61 @@ async function compressImage() {
 async function splitPDF() {
     const input = document.getElementById('splitInput');
     const btn = document.getElementById('splitBtn');
+    const progressText = document.getElementById('splitProgress');
+    
     if (input.files.length === 0) return alert("Pilih file PDF!");
 
-    btn.innerText = "Memproses...";
+    const file = input.files[0];
     btn.disabled = true;
+    btn.innerText = "Membaca PDF...";
+    progressText.classList.remove('hidden');
 
     try {
-        const file = input.files[0];
         const arrayBuffer = await file.arrayBuffer();
+        
+        // Load PDF dengan opsi ignoreEncryption jika perlu
         const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
         const pageCount = pdfDoc.getPageCount();
-        
-        const zip = new JSZip(); // Buat file ZIP baru
+        const zip = new JSZip();
 
         for (let i = 0; i < pageCount; i++) {
+            // Update status ke user
+            progressText.innerText = `Memproses halaman ${i + 1} dari ${pageCount}...`;
+            
             const newPdf = await PDFLib.PDFDocument.create();
             const [copiedPage] = await newPdf.copyPages(pdfDoc, [i]);
             newPdf.addPage(copiedPage);
+
             const pdfBytes = await newPdf.save();
-            
-            // Masukkan tiap halaman ke dalam ZIP
             zip.file(`halaman_${i + 1}.pdf`, pdfBytes);
+
+            // Beri jeda 10ms setiap 5 halaman agar browser bisa bernapas (mencegah crash)
+            if (i % 5 === 0) {
+                await new Promise(resolve => setTimeout(resolve, 10));
+            }
         }
 
-        // Generate file ZIP dan download
-        const zipContent = await zip.generateAsync({ type: "blob" });
+        progressText.innerText = "Mengompres menjadi ZIP...";
+        const zipContent = await zip.generateAsync({ 
+            type: "blob",
+            compression: "DEFLATE",
+            compressionOptions: { level: 6 } // Level kompresi menengah
+        });
+
         const url = URL.createObjectURL(zipContent);
-        saveFile(url, `Hasil_Split_${file.name}.zip`);
-        
-        alert("Selesai! Semua halaman ada di dalam file ZIP.");
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Split_${file.name}.zip`;
+        link.click();
+
+        alert("Sukses! PDF telah dipecah.");
     } catch (error) {
-        alert("Gagal memecah PDF.");
+        console.error("Detail Error:", error);
+        alert("Gagal memproses PDF. Pastikan file tidak dipassword atau rusak.");
     } finally {
-        btn.innerText = "Pecah PDF";
         btn.disabled = false;
+        btn.innerText = "Pecah PDF";
+        progressText.classList.add('hidden');
     }
 }
 
