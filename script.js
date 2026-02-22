@@ -66,62 +66,79 @@ async function splitPDF() {
     const btn = document.getElementById('splitBtn');
     const progressText = document.getElementById('splitProgress');
     const mode = document.getElementById('splitMode').value;
-    const pagesPerFile = parseInt(document.getElementById('pagesPerFile').value) || 1;
+    const pagesPerFile = parseInt(document.getElementById('pagesPerFile').value);
     
-    if (input.files.length === 0) return alert("Pilih file PDF!");
+    if (input.files.length === 0) return alert("Silakan pilih file PDF terlebih dahulu!");
+
+    // 1. Validasi Angka Nol atau Negatif
+    if (mode === 'fixed' && (isNaN(pagesPerFile) || pagesPerFile <= 0)) {
+        return alert("Jumlah halaman harus lebih besar dari 0!");
+    }
 
     const file = input.files[0];
     btn.disabled = true;
-    btn.innerText = "Memproses...";
+    btn.innerText = "Menganalisa...";
     progressText.classList.remove('hidden');
 
     try {
         const arrayBuffer = await file.arrayBuffer();
         const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
         const pageCount = pdfDoc.getPageCount();
-        const zip = new JSZip();
 
-        // Tentukan lompatan (step) berdasarkan mode
+        // 2. Validasi Jika Input Lebih Besar dari Total Halaman
+        if (mode === 'fixed' && pagesPerFile >= pageCount) {
+            alert(`Peringatan: PDF ini hanya memiliki ${pageCount} halaman. Tidak ada yang perlu dipecah karena input Anda (${pagesPerFile}) mencakup seluruh isi file.`);
+            btn.disabled = false;
+            btn.innerText = "Mulai Pecah PDF";
+            progressText.classList.add('hidden');
+            return; // Hentikan proses
+        }
+
+        // 3. Fallback/Peringatan Jika Input > Setengah Total Halaman
+        if (mode === 'fixed' && pagesPerFile > pageCount / 2) {
+            const konfirmasi = confirm(`PDF memiliki ${pageCount} halaman. Jika Anda memecah setiap ${pagesPerFile} halaman, Anda hanya akan mendapatkan 2 file (file pertama berisi ${pagesPerFile} hal, file kedua berisi sisanya). Lanjutkan?`);
+            if (!konfirmasi) {
+                btn.disabled = false;
+                btn.innerText = "Mulai Pecah PDF";
+                progressText.classList.add('hidden');
+                return;
+            }
+        }
+
+        const zip = new JSZip();
         const step = (mode === 'every') ? 1 : pagesPerFile;
 
         for (let i = 0; i < pageCount; i += step) {
             progressText.innerText = `Memproses bagian ${Math.floor(i/step) + 1}...`;
             
             const newPdf = await PDFLib.PDFDocument.create();
-            
-            // Tentukan halaman mana saja yang akan diambil
             const pagesToCopy = [];
             for (let j = i; j < i + step && j < pageCount; j++) {
                 pagesToCopy.push(j);
             }
 
-            // Copy halaman-halaman tersebut ke PDF baru
             const copiedPages = await newPdf.copyPages(pdfDoc, pagesToCopy);
             copiedPages.forEach(page => newPdf.addPage(page));
 
             const pdfBytes = await newPdf.save();
-            
-            // Nama file dalam ZIP
             const fileName = (mode === 'every') 
                 ? `halaman_${i + 1}.pdf` 
-                : `halaman_${i + 1}-sampai-${Math.min(i + step, pageCount)}.pdf`;
+                : `halaman_${i+1}_sampai_${Math.min(i+step, pageCount)}.pdf`;
             
             zip.file(fileName, pdfBytes);
-
-            // Jeda singkat agar browser tidak freeze
             await new Promise(resolve => setTimeout(resolve, 5));
         }
 
-        progressText.innerText = "Membungkus menjadi ZIP...";
+        progressText.innerText = "Menyiapkan Download...";
         const zipContent = await zip.generateAsync({ type: "blob" });
         saveFile(URL.createObjectURL(zipContent), `Split_${file.name}.zip`);
 
     } catch (error) {
         console.error(error);
-        alert("Gagal memproses PDF. File mungkin diproteksi atau rusak.");
+        alert("Terjadi kesalahan. Pastikan file PDF Anda tidak diproteksi.");
     } finally {
         btn.disabled = false;
-        btn.innerText = "Mulai Split";
+        btn.innerText = "Mulai Pecah PDF";
         progressText.classList.add('hidden');
     }
 }
