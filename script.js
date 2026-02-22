@@ -122,6 +122,18 @@ async function splitPDF() {
     }
 }
 
+// Fungsi untuk memunculkan/menyembunyikan input angka
+function toggleSplitInput() {
+    const mode = document.getElementById('splitMode').value;
+    const inputDiv = document.getElementById('fixedPageInput');
+    
+    if (mode === 'fixed') {
+        inputDiv.style.display = 'block'; // Tampilkan jika pilih 'fixed'
+    } else {
+        inputDiv.style.display = 'none';  // Sembunyikan jika pilih 'every'
+    }
+}
+
 // Helper untuk download file
 function saveFile(url, fileName) {
     const link = document.createElement('a');
