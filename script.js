@@ -72,24 +72,28 @@ async function splitPDF() {
     try {
         const file = input.files[0];
         const arrayBuffer = await file.arrayBuffer();
-        
-        // Load PDF yang diupload
         const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
         const pageCount = pdfDoc.getPageCount();
+        
+        const zip = new JSZip(); // Buat file ZIP baru
 
-        // Loop setiap halaman dan buat PDF baru untuk tiap halaman
         for (let i = 0; i < pageCount; i++) {
             const newPdf = await PDFLib.PDFDocument.create();
             const [copiedPage] = await newPdf.copyPages(pdfDoc, [i]);
             newPdf.addPage(copiedPage);
-
             const pdfBytes = await newPdf.save();
-            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-            saveFile(URL.createObjectURL(blob), `Halaman_${i + 1}_${file.name}`);
+            
+            // Masukkan tiap halaman ke dalam ZIP
+            zip.file(`halaman_${i + 1}.pdf`, pdfBytes);
         }
-        alert(`Berhasil memecah ${pageCount} halaman!`);
+
+        // Generate file ZIP dan download
+        const zipContent = await zip.generateAsync({ type: "blob" });
+        const url = URL.createObjectURL(zipContent);
+        saveFile(url, `Hasil_Split_${file.name}.zip`);
+        
+        alert("Selesai! Semua halaman ada di dalam file ZIP.");
     } catch (error) {
-        console.error(error);
         alert("Gagal memecah PDF.");
     } finally {
         btn.innerText = "Pecah PDF";
