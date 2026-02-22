@@ -65,59 +65,63 @@ async function splitPDF() {
     const input = document.getElementById('splitInput');
     const btn = document.getElementById('splitBtn');
     const progressText = document.getElementById('splitProgress');
+    const mode = document.getElementById('splitMode').value;
+    const pagesPerFile = parseInt(document.getElementById('pagesPerFile').value) || 1;
     
     if (input.files.length === 0) return alert("Pilih file PDF!");
 
     const file = input.files[0];
     btn.disabled = true;
-    btn.innerText = "Membaca PDF...";
+    btn.innerText = "Memproses...";
     progressText.classList.remove('hidden');
 
     try {
         const arrayBuffer = await file.arrayBuffer();
-        
-        // Load PDF dengan opsi ignoreEncryption jika perlu
         const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
         const pageCount = pdfDoc.getPageCount();
         const zip = new JSZip();
 
-        for (let i = 0; i < pageCount; i++) {
-            // Update status ke user
-            progressText.innerText = `Memproses halaman ${i + 1} dari ${pageCount}...`;
+        // Tentukan lompatan (step) berdasarkan mode
+        const step = (mode === 'every') ? 1 : pagesPerFile;
+
+        for (let i = 0; i < pageCount; i += step) {
+            progressText.innerText = `Memproses bagian ${Math.floor(i/step) + 1}...`;
             
             const newPdf = await PDFLib.PDFDocument.create();
-            const [copiedPage] = await newPdf.copyPages(pdfDoc, [i]);
-            newPdf.addPage(copiedPage);
+            
+            // Tentukan halaman mana saja yang akan diambil
+            const pagesToCopy = [];
+            for (let j = i; j < i + step && j < pageCount; j++) {
+                pagesToCopy.push(j);
+            }
+
+            // Copy halaman-halaman tersebut ke PDF baru
+            const copiedPages = await newPdf.copyPages(pdfDoc, pagesToCopy);
+            copiedPages.forEach(page => newPdf.addPage(page));
 
             const pdfBytes = await newPdf.save();
-            zip.file(`halaman_${i + 1}.pdf`, pdfBytes);
+            
+            // Nama file dalam ZIP
+            const fileName = (mode === 'every') 
+                ? `halaman_${i + 1}.pdf` 
+                : `halaman_${i + 1}-sampai-${Math.min(i + step, pageCount)}.pdf`;
+            
+            zip.file(fileName, pdfBytes);
 
-            // Beri jeda 10ms setiap 5 halaman agar browser bisa bernapas (mencegah crash)
-            if (i % 5 === 0) {
-                await new Promise(resolve => setTimeout(resolve, 10));
-            }
+            // Jeda singkat agar browser tidak freeze
+            await new Promise(resolve => setTimeout(resolve, 5));
         }
 
-        progressText.innerText = "Mengompres menjadi ZIP...";
-        const zipContent = await zip.generateAsync({ 
-            type: "blob",
-            compression: "DEFLATE",
-            compressionOptions: { level: 6 } // Level kompresi menengah
-        });
+        progressText.innerText = "Membungkus menjadi ZIP...";
+        const zipContent = await zip.generateAsync({ type: "blob" });
+        saveFile(URL.createObjectURL(zipContent), `Split_${file.name}.zip`);
 
-        const url = URL.createObjectURL(zipContent);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `Split_${file.name}.zip`;
-        link.click();
-
-        alert("Sukses! PDF telah dipecah.");
     } catch (error) {
-        console.error("Detail Error:", error);
-        alert("Gagal memproses PDF. Pastikan file tidak dipassword atau rusak.");
+        console.error(error);
+        alert("Gagal memproses PDF. File mungkin diproteksi atau rusak.");
     } finally {
         btn.disabled = false;
-        btn.innerText = "Pecah PDF";
+        btn.innerText = "Mulai Split";
         progressText.classList.add('hidden');
     }
 }
