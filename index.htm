@@ -9,6 +9,7 @@
     <!-- Library PDF dan Kompresi -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.1/dist/browser-image-compression.js"></script>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 </head>
 <body class="bg-gray-50 font-sans">
 
@@ -41,16 +42,35 @@
             </div>
 
             <!-- Card 2: Compressor -->
-            <div class="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition">
+            <div class="bg-white p-6 rounded-xl shadow-md">
                 <div class="mb-4 text-green-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                 </div>
                 <h3 class="text-xl font-semibold mb-2">Image Compressor</h3>
-                <p class="text-gray-600 mb-4 text-sm">Kecilkan ukuran file gambar tanpa mengurangi kualitas secara drastis.</p>
-                <input type="file" id="compressInput" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 mb-4"/>
-                <button onclick="compressImage()" id="compressBtn" class="w-full bg-green-600 text-white py-2 rounded-lg font-medium hover:bg-green-700 transition">Kompres & Download</button>
+                <input type="file" id="compressInput" accept="image/*" class="block w-full text-sm mb-4"/>
+                
+                <!-- Slider Threshold -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">Kualitas (Makin kecil makin ringan):</label>
+                    <input type="range" id="qualityThreshold" min="0.1" max="1.0" step="0.1" value="0.7" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-xs text-gray-500">
+                        <span>Sangat Kecil</span>
+                        <span>Kualitas Tinggi</span>
+                    </div>
+                </div>
+
+                <button onclick="compressImage()" id="compressBtn" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">Kompres & Download</button>
+            </div>
+
+            <!-- Card 3: Split PDF -->
+            <div class="bg-white p-6 rounded-xl shadow-md">
+                <div class="mb-4 text-red-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758L5 19m0-14l4.121 4.121" /></svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Split PDF</h3>
+                <p class="text-gray-600 mb-4 text-sm">Pisahkan setiap halaman PDF menjadi file terpisah.</p>
+                <input type="file" id="splitInput" accept="application/pdf" class="block w-full text-sm mb-4"/>
+                <button onclick="splitPDF()" id="splitBtn" class="w-full bg-red-600 text-white py-2 rounded-lg hover:bg-red-700">Pecah PDF</button>
             </div>
         </div>
 

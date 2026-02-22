@@ -33,6 +33,7 @@ async function convertToPDF() {
 // --- FUNGSI COMPRESSOR ---
 async function compressImage() {
     const fileInput = document.getElementById('compressInput');
+    const qualityValue = document.getElementById('qualityThreshold').value;
     const btn = document.getElementById('compressBtn');
     const imageFile = fileInput.files[0];
 
@@ -42,26 +43,66 @@ async function compressImage() {
     btn.disabled = true;
 
     const options = {
-        maxSizeMB: 0.5, // Target ukuran di bawah 500KB
+        maxSizeMB: qualityValue, // Menggunakan nilai slider sebagai target MB
         maxWidthOrHeight: 1920,
-        useWebWorker: true
+        useWebWorker: true,
+        initialQuality: parseFloat(qualityValue) // Mengatur kualitas awal
     };
 
     try {
         const compressedFile = await imageCompression(imageFile, options);
-        const url = URL.createObjectURL(compressedFile);
-        
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `compressed_${imageFile.name}`;
-        link.click();
+        saveFile(URL.createObjectURL(compressedFile), `compressed_${imageFile.name}`);
     } catch (error) {
-        console.error(error);
-        alert("Gagal mengompres gambar.");
+        alert("Gagal mengompres: " + error.message);
     } finally {
         btn.innerText = "Kompres & Download";
         btn.disabled = false;
     }
+}
+
+// --- Split PDF ---
+async function splitPDF() {
+    const input = document.getElementById('splitInput');
+    const btn = document.getElementById('splitBtn');
+    if (input.files.length === 0) return alert("Pilih file PDF!");
+
+    btn.innerText = "Memproses...";
+    btn.disabled = true;
+
+    try {
+        const file = input.files[0];
+        const arrayBuffer = await file.arrayBuffer();
+        
+        // Load PDF yang diupload
+        const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+        const pageCount = pdfDoc.getPageCount();
+
+        // Loop setiap halaman dan buat PDF baru untuk tiap halaman
+        for (let i = 0; i < pageCount; i++) {
+            const newPdf = await PDFLib.PDFDocument.create();
+            const [copiedPage] = await newPdf.copyPages(pdfDoc, [i]);
+            newPdf.addPage(copiedPage);
+
+            const pdfBytes = await newPdf.save();
+            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+            saveFile(URL.createObjectURL(blob), `Halaman_${i + 1}_${file.name}`);
+        }
+        alert(`Berhasil memecah ${pageCount} halaman!`);
+    } catch (error) {
+        console.error(error);
+        alert("Gagal memecah PDF.");
+    } finally {
+        btn.innerText = "Pecah PDF";
+        btn.disabled = false;
+    }
+}
+
+// Helper untuk download file
+function saveFile(url, fileName) {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    link.click();
 }
 
 // Helper: Membaca file gambar jadi DataURL
