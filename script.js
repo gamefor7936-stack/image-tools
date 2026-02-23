@@ -422,6 +422,56 @@ function processSingleImage(file, format) {
     });
 }
 
+// --- FUNGSI ADD WATERMARK ---
+async function addWatermark() {
+    const input = document.getElementById('watermarkInput');
+    const text = document.getElementById('watermarkText').value || "DRAFT";
+    const fontSize = parseInt(document.getElementById('watermarkFontSize').value) || 50;
+    const opacity = parseFloat(document.getElementById('watermarkOpacity').value) || 0.3;
+    const btn = document.getElementById('watermarkBtn');
+
+    if (input.files.length === 0) return alert("Pilih file PDF terlebih dahulu!");
+
+    btn.disabled = true;
+    btn.innerText = "Memproses...";
+
+    try {
+        const file = input.files[0];
+        const arrayBuffer = await file.arrayBuffer();
+        
+        // Load dokumen menggunakan pdf-lib
+        const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+        const pages = pdfDoc.getPages();
+        const font = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+
+        pages.forEach(page => {
+            const { width, height } = page.getSize();
+            
+            // Gambar teks di tengah halaman secara diagonal
+            page.drawText(text, {
+                x: width / 4,
+                y: height / 2,
+                size: fontSize,
+                font: font,
+                color: PDFLib.rgb(0.7, 0.7, 0.7), // Warna abu-abu
+                opacity: opacity,
+                rotate: PDFLib.degrees(45), // Miring 45 derajat
+            });
+        });
+
+        const pdfBytes = await pdfDoc.save();
+        saveFile(URL.createObjectURL(new Blob([pdfBytes])), `Watermarked_${file.name}`);
+        alert("Berhasil menambahkan watermark!");
+
+    } catch (error) {
+        console.error(error);
+        alert("Gagal memproses watermark. Pastikan file tidak rusak.");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Tambah Watermark";
+    }
+}
+
 // Helper untuk download file
 function saveFile(url, fileName) {
     const link = document.createElement('a');
