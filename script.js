@@ -333,6 +333,72 @@ async function convertBulkImages() {
     }
 }
 
+// --- FUNGSI PDF TO IMAGE ---
+// Konfigurasi Worker PDF.js (Wajib agar tidak error)
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+async function convertPdfToImage() {
+    const input = document.getElementById('pdfToImageInput');
+    const btn = document.getElementById('pdfToImgBtn');
+    const progressText = document.getElementById('pdfToImgProgress');
+    const format = document.getElementById('imgOutputFormat').value;
+    const ext = format === 'image/jpeg' ? 'jpg' : 'png';
+
+    if (input.files.length === 0) return alert("Pilih file PDF dulu!");
+
+    btn.disabled = true;
+    btn.innerText = "Membaca PDF...";
+    progressText.classList.remove('hidden');
+
+    try {
+        const file = input.files[0];
+        const arrayBuffer = await file.arrayBuffer();
+        
+        // Load dokumen PDF
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const pageCount = pdf.numPages;
+        const zip = new JSZip();
+
+        for (let i = 1; i <= pageCount; i++) {
+            progressText.innerText = `Me-render halaman ${i} dari ${pageCount}...`;
+            
+            const page = await pdf.getPage(i);
+            const viewport = page.getViewport({ scale: 2.0 }); // Skala 2.0 agar gambar tajam (HD)
+            
+            // Buat canvas sementara untuk rendering
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            await page.render({ canvasContext: context, viewport: viewport }).promise;
+
+            // Ubah canvas ke Blob gambar
+            const imageBlob = await new Promise(resolve => {
+                canvas.toBlob(blob => resolve(blob), format, 0.9);
+            });
+
+            zip.file(`halaman_${i}.${ext}`, imageBlob);
+            
+            // Beri nafas ke browser
+            await new Promise(resolve => setTimeout(resolve, 50));
+        }
+
+        progressText.innerText = "Mengompres ke ZIP...";
+        const zipContent = await zip.generateAsync({ type: "blob" });
+        saveFile(URL.createObjectURL(zipContent), `PDF_Images_${file.name}.zip`);
+
+        alert("Selesai! Semua halaman telah diubah menjadi gambar.");
+    } catch (error) {
+        console.error(error);
+        alert("Gagal mengonversi PDF. Pastikan file tidak rusak.");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Konversi ke Gambar";
+        progressText.classList.add('hidden');
+    }
+}
+
 // Helper: Fungsi Inti Konversi via Canvas
 function processSingleImage(file, format) {
     return new Promise((resolve, reject) => {
