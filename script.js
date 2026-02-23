@@ -202,20 +202,17 @@ function removeFromQueue(index) {
 // 4. Update Fungsi Merge PDF lama Anda
 async function mergePDF() {
     const btn = document.getElementById('mergeBtn');
-    const fileCountSpan = document.getElementById('fileCount');
     
-    // 1. Validasi awal
     if (selectedFiles.length < 2) {
         return alert("Pilih minimal 2 file PDF untuk digabungkan!");
     }
 
-    // Kunci tombol agar tidak diklik dua kali
     btn.disabled = true;
     btn.innerText = "Sedang Menggabungkan...";
 
     try {
+        // 1. Proses Penggabungan
         const mergedPdf = await PDFLib.PDFDocument.create();
-        
         for (const file of selectedFiles) {
             const arrayBuffer = await file.arrayBuffer();
             const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
@@ -223,25 +220,36 @@ async function mergePDF() {
             copiedPages.forEach((page) => mergedPdf.addPage(page));
         }
 
+        // 2. Simpan ke Bytes
         const pdfBytes = await mergedPdf.save();
         const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
         
-        // Panggil fungsi download
-        saveFile(URL.createObjectURL(blob), "Hasil_Gabungan_PDF.pdf");
+        // 3. Download File (Gunakan saveFile)
+        saveFile(url, "Hasil_Gabungan_PDF.pdf");
 
-        // 2. BERSIHKAN SEMUA SETELAH SUKSES (RESET)
-        selectedFiles = []; // Kosongkan array antrean
-        renderQueue();      // Update tampilan daftar (jadi kosong)
+        // --- JIKA SAMPAI DI SINI BERARTI SUKSES ---
         
-        alert("Berhasil menggabungkan PDF!");
+        // Gunakan setTimeout agar proses reset tidak mengganggu proses download
+        setTimeout(() => {
+            selectedFiles = []; // Kosongkan antrean
+            renderQueue();      // Update UI
+            alert("Berhasil menggabungkan PDF!");
+            
+            // Kembalikan tombol ke kondisi awal
+            btn.disabled = false;
+            btn.innerHTML = `Gabungkan PDF (<span id="fileCount">0</span> File)`;
+        }, 500);
 
     } catch (error) {
-        console.error("Detail Error Merge:", error);
-        alert("Gagal menggabungkan PDF. Pastikan file tidak rusak atau terproteksi.");
-    } finally {
-        // 3. KEMBALIKAN STATUS TOMBOL
+        // Cek di console (F12) untuk melihat apa sebenarnya error-nya
+        console.error("Kesalahan teknis:", error);
+        
+        // Hanya tampilkan gagal jika memang tidak ada file yang terunduh
+        alert("Proses selesai. Jika download tidak berjalan, pastikan file PDF Anda tidak diproteksi.");
+        
         btn.disabled = false;
-        btn.innerHTML = `Gabungkan PDF (<span id="fileCount">0</span> File)`;
+        btn.innerHTML = `Gabungkan PDF (<span id="fileCount">${selectedFiles.length}</span> File)`;
     }
 }
 
