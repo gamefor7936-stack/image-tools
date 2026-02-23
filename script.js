@@ -177,20 +177,25 @@ function handleMergeFiles(input) {
 // 2. Fungsi untuk menampilkan daftar file di UI
 function renderQueue() {
     const queueDiv = document.getElementById('fileQueue');
-    const fileCountSpan = document.getElementById('fileCount');
+    const fileCountSpan = document.getElementById('fileCount'); // Elemen ini bisa null saat proses merge
     
-    queueDiv.innerHTML = ""; // Bersihkan list lama
-    fileCountSpan.innerText = selectedFiles.length;
+    if (queueDiv) {
+        queueDiv.innerHTML = ""; 
+        selectedFiles.forEach((file, index) => {
+            const item = document.createElement('div');
+            item.className = "flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-200 text-[10px]";
+            item.innerHTML = `
+                <span class="truncate w-32 font-medium text-gray-700">${index + 1}. ${file.name}</span>
+                <button onclick="removeFromQueue(${index})" class="text-red-500 hover:text-red-700 font-bold">Hapus</button>
+            `;
+            queueDiv.appendChild(item);
+        });
+    }
 
-    selectedFiles.forEach((file, index) => {
-        const item = document.createElement('div');
-        item.className = "flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-200 text-xs";
-        item.innerHTML = `
-            <span class="truncate w-40 font-medium text-gray-700">${index + 1}. ${file.name}</span>
-            <button onclick="removeFromQueue(${index})" class="text-red-500 hover:text-red-700 font-bold">Hapus</button>
-        `;
-        queueDiv.appendChild(item);
-    });
+    // CEK: Hanya update angka jika elemennya ada (tidak null)
+    if (fileCountSpan) {
+        fileCountSpan.innerText = selectedFiles.length;
+    }
 }
 
 // 3. Fungsi hapus file dari antrean
@@ -202,54 +207,39 @@ function removeFromQueue(index) {
 // 4. Update Fungsi Merge PDF lama Anda
 async function mergePDF() {
     const btn = document.getElementById('mergeBtn');
-    
-    if (selectedFiles.length < 2) {
-        return alert("Pilih minimal 2 file PDF untuk digabungkan!");
-    }
+    if (selectedFiles.length < 2) return alert("Pilih minimal 2 file!");
 
     btn.disabled = true;
     btn.innerText = "Sedang Menggabungkan...";
 
     try {
-        // 1. Proses Penggabungan
         const mergedPdf = await PDFLib.PDFDocument.create();
         for (const file of selectedFiles) {
             const arrayBuffer = await file.arrayBuffer();
             const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
             const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-            copiedPages.forEach((page) => mergedPdf.addPage(page));
+            copiedPages.forEach(page => mergedPdf.addPage(page));
         }
 
-        // 2. Simpan ke Bytes
         const pdfBytes = await mergedPdf.save();
-        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
-        
-        // 3. Download File (Gunakan saveFile)
-        saveFile(url, "Hasil_Gabungan_PDF.pdf");
+        saveFile(URL.createObjectURL(new Blob([pdfBytes])), "Merged.pdf");
 
-        // --- JIKA SAMPAI DI SINI BERARTI SUKSES ---
+        // RESET SETELAH SUKSES
+        selectedFiles = [];
         
-        // Gunakan setTimeout agar proses reset tidak mengganggu proses download
-        setTimeout(() => {
-            selectedFiles = []; // Kosongkan antrean
-            renderQueue();      // Update UI
-            alert("Berhasil menggabungkan PDF!");
-            
-            // Kembalikan tombol ke kondisi awal
-            btn.disabled = false;
-            btn.innerHTML = `Gabungkan PDF (<span id="fileCount">0</span> File)`;
-        }, 500);
+        // Kembalikan tombol ke HTML semula AGAR span id="fileCount" muncul lagi
+        btn.innerHTML = `Gabungkan PDF (<span id="fileCount">0</span> File)`;
+        btn.disabled = false;
+
+        renderQueue();
+        alert("Berhasil menggabungkan PDF!");
 
     } catch (error) {
-        // Cek di console (F12) untuk melihat apa sebenarnya error-nya
-        console.error("Kesalahan teknis:", error);
-        
-        // Hanya tampilkan gagal jika memang tidak ada file yang terunduh
-        alert("Proses selesai. Jika download tidak berjalan, pastikan file PDF Anda tidak diproteksi.");
-        
-        btn.disabled = false;
+        console.error(error);
+        alert("Gagal menggabungkan PDF.");
+        // Kembalikan tombol jika gagal
         btn.innerHTML = `Gabungkan PDF (<span id="fileCount">${selectedFiles.length}</span> File)`;
+        btn.disabled = false;
     }
 }
 
