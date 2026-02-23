@@ -202,14 +202,16 @@ function removeFromQueue(index) {
 // 4. Update Fungsi Merge PDF lama Anda
 async function mergePDF() {
     const btn = document.getElementById('mergeBtn');
+    const fileCountSpan = document.getElementById('fileCount');
     
-    // Gunakan variabel global 'selectedFiles', bukan dari input langsung
+    // 1. Validasi awal
     if (selectedFiles.length < 2) {
         return alert("Pilih minimal 2 file PDF untuk digabungkan!");
     }
 
+    // Kunci tombol agar tidak diklik dua kali
     btn.disabled = true;
-    btn.innerText = "Menggabungkan...";
+    btn.innerText = "Sedang Menggabungkan...";
 
     try {
         const mergedPdf = await PDFLib.PDFDocument.create();
@@ -222,17 +224,24 @@ async function mergePDF() {
         }
 
         const pdfBytes = await mergedPdf.save();
-        saveFile(URL.createObjectURL(new Blob([pdfBytes])), "Gabungan_Dokumen.pdf");
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
         
-        // Opsional: Kosongkan antrean setelah sukses
-        selectedFiles = [];
-        renderQueue();
+        // Panggil fungsi download
+        saveFile(URL.createObjectURL(blob), "Hasil_Gabungan_PDF.pdf");
+
+        // 2. BERSIHKAN SEMUA SETELAH SUKSES (RESET)
+        selectedFiles = []; // Kosongkan array antrean
+        renderQueue();      // Update tampilan daftar (jadi kosong)
+        
         alert("Berhasil menggabungkan PDF!");
+
     } catch (error) {
-        alert("Gagal menggabungkan PDF.");
+        console.error("Detail Error Merge:", error);
+        alert("Gagal menggabungkan PDF. Pastikan file tidak rusak atau terproteksi.");
     } finally {
+        // 3. KEMBALIKAN STATUS TOMBOL
         btn.disabled = false;
-        btn.innerText = "Gabungkan PDF (0 File)";
+        btn.innerHTML = `Gabungkan PDF (<span id="fileCount">0</span> File)`;
     }
 }
 
