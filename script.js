@@ -155,6 +155,72 @@ function toggleSplitInput() {
     }
 }
 
+//--- Merge PDF ---
+async function mergePDF() {
+    const input = document.getElementById('mergeInput');
+    const btn = document.getElementById('mergeBtn');
+    
+    if (input.files.length < 2) return alert("Pilih minimal 2 file PDF untuk digabungkan!");
+
+    btn.disabled = true;
+    btn.innerText = "Menggabungkan...";
+
+    try {
+        const mergedPdf = await PDFLib.PDFDocument.create();
+        
+        for (const file of input.files) {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
+            const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+            copiedPages.forEach((page) => mergedPdf.addPage(page));
+        }
+
+        const pdfBytes = await mergedPdf.save();
+        saveFile(URL.createObjectURL(new Blob([pdfBytes])), "Gabungan_Dokumen.pdf");
+        alert("Berhasil menggabungkan PDF!");
+    } catch (error) {
+        alert("Gagal menggabungkan PDF. Pastikan file tidak rusak.");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Gabungkan PDF";
+    }
+}
+
+// --- FUNGSI IMAGE CONVERTER ---
+async function convertImageFormat() {
+    const input = document.getElementById('convertImageInput');
+    const format = document.getElementById('targetFormat').value;
+    const btn = document.getElementById('convertBtn');
+
+    if (input.files.length === 0) return alert("Pilih gambar dulu!");
+
+    btn.disabled = true;
+    btn.innerText = "Memproses...";
+
+    const file = input.files[0];
+    const image = new Image();
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+        image.src = e.target.result;
+        image.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = image.width;
+            canvas.height = image.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(image, 0, 0);
+
+            canvas.toBlob((blob) => {
+                const extension = format.split('/')[1];
+                saveFile(URL.createObjectURL(blob), `converted_image.${extension}`);
+                btn.disabled = false;
+                btn.innerText = "Ubah Format & Download";
+            }, format);
+        };
+    };
+    reader.readAsDataURL(file);
+}
+
 // Helper untuk download file
 function saveFile(url, fileName) {
     const link = document.createElement('a');
