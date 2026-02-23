@@ -156,11 +156,57 @@ function toggleSplitInput() {
 }
 
 //--- Merge PDF ---
+// Variabel global untuk menyimpan antrean file
+let selectedFiles = [];
+
+// 1. Fungsi saat user memilih file
+function handleMergeFiles(input) {
+    const files = Array.from(input.files);
+    
+    files.forEach(file => {
+        // Tambahkan ke array global
+        selectedFiles.push(file);
+    });
+
+    // Reset input agar bisa pilih file yang sama lagi jika mau
+    input.value = "";
+    
+    renderQueue();
+}
+
+// 2. Fungsi untuk menampilkan daftar file di UI
+function renderQueue() {
+    const queueDiv = document.getElementById('fileQueue');
+    const fileCountSpan = document.getElementById('fileCount');
+    
+    queueDiv.innerHTML = ""; // Bersihkan list lama
+    fileCountSpan.innerText = selectedFiles.length;
+
+    selectedFiles.forEach((file, index) => {
+        const item = document.createElement('div');
+        item.className = "flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-200 text-xs";
+        item.innerHTML = `
+            <span class="truncate w-40 font-medium text-gray-700">${index + 1}. ${file.name}</span>
+            <button onclick="removeFromQueue(${index})" class="text-red-500 hover:text-red-700 font-bold">Hapus</button>
+        `;
+        queueDiv.appendChild(item);
+    });
+}
+
+// 3. Fungsi hapus file dari antrean
+function removeFromQueue(index) {
+    selectedFiles.splice(index, 1);
+    renderQueue();
+}
+
+// 4. Update Fungsi Merge PDF lama Anda
 async function mergePDF() {
-    const input = document.getElementById('mergeInput');
     const btn = document.getElementById('mergeBtn');
     
-    if (input.files.length < 2) return alert("Pilih minimal 2 file PDF untuk digabungkan!");
+    // Gunakan variabel global 'selectedFiles', bukan dari input langsung
+    if (selectedFiles.length < 2) {
+        return alert("Pilih minimal 2 file PDF untuk digabungkan!");
+    }
 
     btn.disabled = true;
     btn.innerText = "Menggabungkan...";
@@ -168,7 +214,7 @@ async function mergePDF() {
     try {
         const mergedPdf = await PDFLib.PDFDocument.create();
         
-        for (const file of input.files) {
+        for (const file of selectedFiles) {
             const arrayBuffer = await file.arrayBuffer();
             const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
             const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
@@ -177,12 +223,16 @@ async function mergePDF() {
 
         const pdfBytes = await mergedPdf.save();
         saveFile(URL.createObjectURL(new Blob([pdfBytes])), "Gabungan_Dokumen.pdf");
+        
+        // Opsional: Kosongkan antrean setelah sukses
+        selectedFiles = [];
+        renderQueue();
         alert("Berhasil menggabungkan PDF!");
     } catch (error) {
-        alert("Gagal menggabungkan PDF. Pastikan file tidak rusak.");
+        alert("Gagal menggabungkan PDF.");
     } finally {
         btn.disabled = false;
-        btn.innerText = "Gabungkan PDF";
+        btn.innerText = "Gabungkan PDF (0 File)";
     }
 }
 

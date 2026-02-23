@@ -106,16 +106,35 @@
             </div>
 
             <!-- KARTU 4: MERGE PDF -->
+            <!-- KARTU MERGE PDF PRO -->
             <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
                 <div class="mb-4 text-purple-500">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
                     </svg>
                 </div>
-                <h3 class="text-xl font-semibold mb-2">Merge PDF</h3>
-                <p class="text-gray-500 text-xs mb-4">Gabungkan beberapa file PDF menjadi satu urutan.</p>
-                <input type="file" id="mergeInput" accept="application/pdf" multiple class="block w-full text-sm mb-4 file:rounded-lg file:border-0 file:bg-purple-50 file:text-purple-700"/>
-                <button onclick="mergePDF()" id="mergeBtn" class="w-full bg-purple-600 text-white py-2.5 rounded-lg font-bold hover:bg-purple-700">Gabungkan PDF</button>
+                <h3 class="text-xl font-semibold mb-2 text-gray-800">Merge PDF</h3>
+                <p class="text-gray-500 text-xs mb-4">Tambahkan file satu per satu atau sekaligus.</p>
+
+                <!-- Tombol Pilih File yang Lebih Menarik -->
+                <div class="mb-4">
+                    <label for="mergeInput" class="flex flex-col items-center justify-center w-full h-32 border-2 border-purple-300 border-dashed rounded-lg cursor-pointer bg-purple-50 hover:bg-purple-100 transition">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <p class="mb-2 text-sm text-purple-700 font-bold">Klik untuk tambah file PDF</p>
+                            <p class="text-xs text-purple-500">Bisa berkali-kali</p>
+                        </div>
+                        <input type="file" id="mergeInput" accept="application/pdf" multiple class="hidden" onchange="handleMergeFiles(this)" />
+                    </label>
+                </div>
+
+                <!-- DAFTAR FILE (ANTREAN) -->
+                <div id="fileQueue" class="space-y-2 mb-4 max-h-48 overflow-y-auto">
+                    <!-- List file akan muncul di sini secara dinamis -->
+                </div>
+
+                <button onclick="mergePDF()" id="mergeBtn" class="w-full bg-purple-600 text-white py-2.5 rounded-lg font-bold hover:bg-purple-700 shadow-lg disabled:bg-gray-400">
+                    Gabungkan PDF (<span id="fileCount">0</span> File)
+                </button>
             </div>
 
             <!-- KARTU 5: IMAGE CONVERTER -->
