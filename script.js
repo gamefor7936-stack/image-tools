@@ -244,38 +244,116 @@ async function mergePDF() {
 }
 
 // --- FUNGSI IMAGE CONVERTER ---
-async function convertImageFormat() {
-    const input = document.getElementById('convertImageInput');
-    const format = document.getElementById('targetFormat').value;
-    const btn = document.getElementById('convertBtn');
+// Variabel global untuk antrean gambar
+let selectedImages = [];
 
-    if (input.files.length === 0) return alert("Pilih gambar dulu!");
+// 1. Handle pemilihan file gambar
+function handleImageConvertFiles(input) {
+    const files = Array.from(input.files);
+    files.forEach(file => selectedImages.push(file));
+    input.value = ""; // Reset input
+    renderImageQueue();
+}
+
+// 2. Tampilkan daftar gambar di UI
+function renderImageQueue() {
+    const queueDiv = document.getElementById('imageQueue');
+    const countSpan = document.getElementById('imageCount');
+    if (!queueDiv) return;
+
+    queueDiv.innerHTML = "";
+    if (countSpan) countSpan.innerText = selectedImages.length;
+
+    selectedImages.forEach((file, index) => {
+        const item = document.createElement('div');
+        item.className = "flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-200 text-[10px]";
+        item.innerHTML = `
+            <span class="truncate w-32 font-medium text-gray-700 text-balance uppercase text-[9px]">${index + 1}. ${file.name}</span>
+            <button onclick="removeImageFromQueue(${index})" class="text-red-500 hover:text-red-700 font-bold">Hapus</button>
+        `;
+        queueDiv.appendChild(item);
+    });
+}
+
+// 3. Hapus gambar dari antrean
+function removeImageFromQueue(index) {
+    selectedImages.splice(index, 1);
+    renderImageQueue();
+}
+
+// 4. Proses Konversi Massal
+async function convertBulkImages() {
+    const btn = document.getElementById('convertBtn');
+    const targetFormat = document.getElementById('targetFormat').value;
+    const extension = targetFormat.split('/')[1];
+
+    if (selectedImages.length === 0) return alert("Pilih gambar terlebih dahulu!");
 
     btn.disabled = true;
     btn.innerText = "Memproses...";
 
-    const file = input.files[0];
-    const image = new Image();
-    const reader = new FileReader();
+    try {
+        const zip = new JSZip();
 
-    reader.onload = (e) => {
-        image.src = e.target.result;
-        image.onload = () => {
+        for (let i = 0; i < selectedImages.length; i++) {
+            const file = selectedImages[i];
+            const convertedBlob = await processSingleImage(file, targetFormat);
+            
+            // Nama file baru (misal: gambar_1.png)
+            const newName = file.name.substring(0, file.name.lastIndexOf('.')) || `image_${i+1}`;
+            
+            if (selectedImages.length === 1) {
+                // Jika cuma 1 gambar, langsung download filenya
+                saveFile(URL.createObjectURL(convertedBlob), `${newName}.${extension}`);
+            } else {
+                // Jika banyak, masukkan ke ZIP
+                zip.file(`${newName}.${extension}`, convertedBlob);
+            }
+        }
+
+        if (selectedImages.length > 1) {
+            const zipContent = await zip.generateAsync({ type: "blob" });
+            saveFile(URL.createObjectURL(zipContent), `Converted_Images.zip`);
+        }
+
+        // Reset setelah selesai
+        setTimeout(() => {
+            selectedImages = [];
+            renderImageQueue();
+            alert("Konversi selesai!");
+            btn.disabled = false;
+            btn.innerHTML = `Konversi & Download (<span id="imageCount">0</span>)`;
+        }, 500);
+
+    } catch (error) {
+        console.error(error);
+        alert("Gagal mengonversi gambar.");
+        btn.disabled = false;
+        btn.innerHTML = `Konversi & Download (<span id="imageCount">${selectedImages.length}</span>)`;
+    }
+}
+
+// Helper: Fungsi Inti Konversi via Canvas
+function processSingleImage(file, format) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.src = url;
+        
+        img.onload = () => {
             const canvas = document.createElement('canvas');
-            canvas.width = image.width;
-            canvas.height = image.height;
+            canvas.width = img.width;
+            canvas.height = img.height;
             const ctx = canvas.getContext('2d');
-            ctx.drawImage(image, 0, 0);
-
+            ctx.drawImage(img, 0, 0);
+            
             canvas.toBlob((blob) => {
-                const extension = format.split('/')[1];
-                saveFile(URL.createObjectURL(blob), `converted_image.${extension}`);
-                btn.disabled = false;
-                btn.innerText = "Ubah Format & Download";
-            }, format);
+                URL.revokeObjectURL(url); // Bersihkan memori
+                resolve(blob);
+            }, format, 0.9); // Kualitas 90%
         };
-    };
-    reader.readAsDataURL(file);
+        img.onerror = reject;
+    });
 }
 
 // Helper untuk download file
