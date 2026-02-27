@@ -699,6 +699,84 @@ async function removeExif() {
     reader.readAsDataURL(file);
 }
 
+// --- BASE64 CONVERTER LOGIC ---
+
+// 1. Teks ke Base64
+function encodeB64() {
+    const input = document.getElementById('b64Input');
+    try {
+        input.value = btoa(unescape(encodeURIComponent(input.value)));
+    } catch (e) {
+        alert("Gagal melakukan encode. Pastikan teks valid.");
+    }
+}
+
+// 2. Base64 ke Teks
+function decodeB64() {
+    const input = document.getElementById('b64Input');
+    try {
+        input.value = decodeURIComponent(escape(atob(input.value)));
+    } catch (e) {
+        alert("Kode Base64 tidak valid!");
+    }
+}
+
+// 3. Gambar ke Base64
+function imageToBase64() {
+    const file = document.getElementById('b64File').files[0];
+    const output = document.getElementById('b64Input');
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        output.value = e.target.result; // Hasilnya berupa data:image/png;base64,xxxx
+        alert("Gambar berhasil diubah ke Base64! Kode ada di kotak teks.");
+    };
+    reader.readAsDataURL(file);
+}
+
+// --- PDF TEXT EXTRACTOR (PDF TO WORD ALTERNATIVE) ---
+
+async function extractTextFromPDF() {
+    const input = document.getElementById('pdfExtractInput');
+    const btn = document.getElementById('extractBtn');
+    const progressText = document.getElementById('extractProgress');
+
+    if (input.files.length === 0) return alert("Pilih file PDF dulu!");
+
+    btn.disabled = true;
+    btn.innerText = "Membaca...";
+    progressText.classList.remove('hidden');
+
+    try {
+        const file = input.files[0];
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = "";
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+            progressText.innerText = `Mengekstrak Halaman ${i}/${pdf.numPages}...`;
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            const strings = content.items.map(item => item.str);
+            fullText += strings.join(" ") + "\n\n";
+        }
+
+        // Simpan sebagai file .txt (Bisa dibuka di Word)
+        const blob = new Blob([fullText], { type: 'text/plain' });
+        saveFile(URL.createObjectURL(blob), `Teks_${file.name.replace('.pdf', '')}.txt`);
+        
+        alert("Berhasil mengekstrak teks! File .txt telah diunduh.");
+    } catch (error) {
+        console.error(error);
+        alert("Gagal mengekstrak teks dari PDF.");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "Ekstrak & Simpan Teks";
+        progressText.classList.add('hidden');
+    }
+}
+
 // Helper untuk download file
 function saveFile(url, fileName) {
     const link = document.createElement('a');

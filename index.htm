@@ -331,6 +331,40 @@
                 <input type="file" id="exifInput" accept="image/*" class="block w-full text-sm mb-4">
                 <button onclick="removeExif()" id="exifBtn" class="w-full bg-blue-800 text-white py-2 rounded-lg font-bold hover:bg-blue-900 transition-all">Hapus Metadata & Simpan</button>
             </div>
+
+            <!-- KARTU 13: BASE64 CONVERTER -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+                <div class="mb-4 text-blue-500 font-bold text-2xl font-mono">B64</div>
+                <h3 class="text-xl font-semibold mb-2">Base64 Converter</h3>
+                
+                <div class="space-y-3">
+                    <textarea id="b64Input" rows="3" class="w-full p-2 border rounded text-xs font-mono" placeholder="Ketik teks atau tempel kode Base64..."></textarea>
+                    
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="encodeB64()" class="bg-blue-600 text-white py-2 rounded text-[10px] font-bold">TEXT TO B64</button>
+                        <button onclick="decodeB64()" class="bg-gray-700 text-white py-2 rounded text-[10px] font-bold">B64 TO TEXT</button>
+                    </div>
+
+                    <div class="border-t pt-3 mt-3">
+                        <label class="block text-[10px] font-bold text-gray-400 mb-1">ATAU UBAH GAMBAR KE B64:</label>
+                        <input type="file" id="b64File" accept="image/*" class="block w-full text-[10px]" onchange="imageToBase64()">
+                    </div>
+                </div>
+            </div>
+
+            <!-- KARTU 14: PDF TEXT EXTRACTOR (PDF TO WORD ALTERNATIVE) -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+                <div class="mb-4 text-amber-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor font-bold">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">PDF Text Extractor</h3>
+                <p class="text-[10px] text-gray-500 mb-4">Ambil semua teks dari PDF dan simpan ke file teks/doc.</p>
+                <input type="file" id="pdfExtractInput" accept="application/pdf" class="block w-full text-sm mb-4">
+                <button onclick="extractTextFromPDF()" id="extractBtn" class="w-full bg-amber-600 text-white py-2 rounded-lg font-bold hover:bg-amber-700">Ekstrak & Simpan Teks</button>
+                <p id="extractProgress" class="text-[10px] text-center mt-2 text-amber-600 font-bold hidden"></p>
+            </div>
         </div>
 
         <!-- Placeholder Iklan (Nanti ditaruh di sini) -->
