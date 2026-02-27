@@ -551,22 +551,26 @@ function hexToRgb(hex) {
     } : { r: 0, g: 0, b: 0 };
 }
 
-// --- QR CODE GENERATOR ---
-let qrInstance = null;
+// --- QR CODE (UPDATE DENGAN DOWNLOAD) ---
 function generateQR() {
     const text = document.getElementById('qrText').value;
     const container = document.getElementById('qrcode');
-    if (!text) return alert("Masukkan teks atau link!");
+    const dlBtn = document.getElementById('dlQR');
+    if (!text) return alert("Masukkan teks!");
     
-    container.innerHTML = ""; // Bersihkan QR sebelumnya
-    qrInstance = new QRCode(container, {
-        text: text,
-        width: 128,
-        height: 128,
-        colorDark : "#000000",
-        colorLight : "#ffffff",
+    container.innerHTML = "";
+    new QRCode(container, {
+        text: text, width: 256, height: 256,
+        colorDark : "#000000", colorLight : "#ffffff",
         correctLevel : QRCode.CorrectLevel.H
     });
+    dlBtn.classList.remove('hidden');
+}
+
+function downloadQR() {
+    const img = document.querySelector('#qrcode img');
+    if (!img) return alert("Buat QR dulu!");
+    saveFile(img.src, "QRCode_MultiTool.png");
 }
 
 // --- CASE CONVERTER & WORD COUNT ---
@@ -605,6 +609,91 @@ function copyPass() {
     copyText.select();
     navigator.clipboard.writeText(copyText.value);
     alert("Password berhasil disalin!");
+}
+
+// --- YOUTUBE THUMBNAIL DOWNLOADER ---
+function getYoutubeThumb() {
+    const url = document.getElementById('ytUrl').value;
+    const preview = document.getElementById('ytPreview');
+    const img = document.getElementById('thumbImg');
+    const btn = document.getElementById('getThumbBtn');
+
+    // Regex untuk ambil ID Video YouTube
+    const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+
+    if (match && match[2].length == 11) {
+        const videoId = match[2];
+        const thumbUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+        img.src = thumbUrl;
+        preview.classList.remove('hidden');
+        btn.classList.add('hidden');
+    } else {
+        alert("Link YouTube tidak valid!");
+    }
+}
+
+function downloadThumb() {
+    const imgSrc = document.getElementById('thumbImg').src;
+    // Menggunakan fetch untuk download karena link lintas domain
+    fetch(imgSrc).then(res => res.blob()).then(blob => {
+        saveFile(URL.createObjectURL(blob), "YT_Thumbnail_HD.jpg");
+    });
+}
+
+// --- JSON FORMATTER ---
+function formatJSON() {
+    const input = document.getElementById('jsonInput');
+    try {
+        const obj = JSON.parse(input.value);
+        input.value = JSON.stringify(obj, null, 4);
+    } catch (e) {
+        alert("JSON tidak valid: " + e.message);
+    }
+}
+
+function minifyJSON() {
+    const input = document.getElementById('jsonInput');
+    try {
+        const obj = JSON.parse(input.value);
+        input.value = JSON.stringify(obj);
+    } catch (e) {
+        alert("JSON tidak valid!");
+    }
+}
+
+// --- EXIF PRIVACY REMOVER ---
+async function removeExif() {
+    const input = document.getElementById('exifInput');
+    const btn = document.getElementById('exifBtn');
+    if (!input.files[0]) return alert("Pilih foto!");
+
+    btn.disabled = true;
+    btn.innerText = "Membersihkan Metadata...";
+
+    const file = input.files[0];
+    const img = new Image();
+    const reader = new FileReader();
+
+    reader.onload = (e) => {
+        img.src = e.target.result;
+        img.onload = () => {
+            // Logika: Menggambar ulang di Canvas akan menghapus semua metadata EXIF bawaan
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+
+            canvas.toBlob((blob) => {
+                saveFile(URL.createObjectURL(blob), `Cleaned_${file.name}`);
+                btn.disabled = false;
+                btn.innerText = "Hapus Metadata & Simpan";
+                alert("Metadata Berhasil Dihapus! Foto Anda sekarang aman.");
+            }, 'image/jpeg', 0.95);
+        };
+    };
+    reader.readAsDataURL(file);
 }
 
 // Helper untuk download file

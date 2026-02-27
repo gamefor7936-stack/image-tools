@@ -244,17 +244,16 @@
                 </div>
             </div>
 
-            <!-- KARTU 7: QR CODE GENERATOR -->
+            <!-- KARTU 7: QR CODE GENERATOR (UPDATED WITH DOWNLOAD) -->
             <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-                <div class="mb-4 text-indigo-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor font-bold">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                    </svg>
+                <div class="mb-4 text-indigo-600 font-bold text-2xl">QR</div>
+                <h3 class="text-xl font-semibold mb-2 text-gray-800">QR Code Generator</h3>
+                <input type="text" id="qrText" placeholder="Masukkan Link atau Teks" class="w-full p-2 border rounded text-sm mb-4 outline-none focus:ring-2 focus:ring-indigo-400">
+                <div id="qrcode" class="flex justify-center mb-4 p-2 bg-white inline-block mx-auto"></div>
+                <div class="flex gap-2">
+                    <button onclick="generateQR()" class="flex-1 bg-indigo-600 text-white py-2 rounded-lg font-bold hover:bg-indigo-700">Buat</button>
+                    <button id="dlQR" onclick="downloadQR()" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-bold hover:bg-gray-300 hidden">Download</button>
                 </div>
-                <h3 class="text-xl font-semibold mb-2">QR Code Generator</h3>
-                <input type="text" id="qrText" placeholder="Masukkan Link atau Teks" class="w-full p-2 border rounded text-sm mb-4">
-                <div id="qrcode" class="flex justify-center mb-4"></div>
-                <button onclick="generateQR()" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-bold hover:bg-indigo-700">Buat QR Code</button>
             </div>
 
             <!-- KARTU 8: CASE CONVERTER & WORD COUNT -->
@@ -291,6 +290,46 @@
                 <input type="range" id="passLength" min="8" max="32" value="16" class="w-full mb-2">
                 <p class="text-[10px] text-center mb-4 text-gray-500">Panjang: <span id="lenVal">16</span> karakter</p>
                 <button onclick="generatePass()" class="w-full bg-slate-800 text-white py-2 rounded-lg font-bold">Buat Password Aman</button>
+            </div>
+
+            <!-- KARTU 10: YT THUMBNAIL DOWNLOADER -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+                <div class="mb-4 text-red-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor font-bold">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">YT Thumbnail Downloader</h3>
+                <input type="text" id="ytUrl" placeholder="Tempel Link Video YouTube" class="w-full p-2 border rounded text-sm mb-4">
+                <div id="ytPreview" class="hidden mb-4">
+                    <img id="thumbImg" src="" class="rounded-lg shadow-sm mb-2 w-full">
+                    <button onclick="downloadThumb()" class="w-full bg-red-600 text-white py-2 rounded-lg font-bold">Download Gambar HD</button>
+                </div>
+                <button id="getThumbBtn" onclick="getYoutubeThumb()" class="w-full bg-gray-800 text-white py-2 rounded-lg font-bold">Ambil Thumbnail</button>
+            </div>
+
+            <!-- KARTU 11: JSON FORMATTER -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+                <div class="mb-4 text-green-600 font-mono font-bold text-2xl">{ }</div>
+                <h3 class="text-xl font-semibold mb-2">JSON Formatter</h3>
+                <textarea id="jsonInput" rows="4" class="w-full p-2 border rounded text-xs font-mono mb-2" placeholder='Tempel JSON berantakan di sini...'></textarea>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="formatJSON()" class="bg-green-600 text-white py-2 rounded font-bold text-xs">Rapikan (Format)</button>
+                    <button onclick="minifyJSON()" class="bg-gray-700 text-white py-2 rounded font-bold text-xs">Kecilkan (Minify)</button>
+                </div>
+            </div>
+
+            <!-- KARTU 12: EXIF REMOVER (PRIVACY) -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+                <div class="mb-4 text-blue-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.882 9.882L4.99 4.99m14.122 14.122l-4.99-4.99" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Exif Privacy Remover</h3>
+                <p class="text-[10px] text-gray-500 mb-4">Hapus metadata foto (Lokasi GPS, Tipe HP, dll) demi keamanan.</p>
+                <input type="file" id="exifInput" accept="image/*" class="block w-full text-sm mb-4">
+                <button onclick="removeExif()" id="exifBtn" class="w-full bg-blue-800 text-white py-2 rounded-lg font-bold hover:bg-blue-900 transition-all">Hapus Metadata & Simpan</button>
             </div>
         </div>
 
