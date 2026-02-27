@@ -423,53 +423,132 @@ function processSingleImage(file, format) {
 }
 
 // --- FUNGSI ADD WATERMARK ---
-async function addWatermark() {
+let fbCanvas; // Fabric Canvas
+let wmObject; // Objek Teks Watermark
+let originalPdfDoc; // Dokumen PDF asli
+let pdfPageScale = 1; // Skala preview dibanding asli
+
+// 1. Inisialisasi Preview saat File dipilih
+async function initWatermarkPreview() {
     const input = document.getElementById('watermarkInput');
-    const text = document.getElementById('watermarkText').value || "DRAFT";
-    const fontSize = parseInt(document.getElementById('watermarkFontSize').value) || 50;
-    const opacity = parseFloat(document.getElementById('watermarkOpacity').value) || 0.3;
+    const loadingText = document.getElementById('previewLoading');
+    const wrapper = document.getElementById('canvasWrapper');
+
+    if (!input.files[0]) return;
+    
+    loadingText.innerText = "Membaca Halaman PDF...";
+    
+    const file = input.files[0];
+    const arrayBuffer = await file.arrayBuffer();
+    originalPdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+    
+    // Render halaman 1 sebagai Background Preview menggunakan PDF.js
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const page = await pdf.getPage(1);
+    
+    const viewport = page.getViewport({ scale: 1.0 });
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    
+    await page.render({ canvasContext: context, viewport: viewport }).promise;
+
+    // Tampilkan Wrapper dan Hapus Loading
+    loadingText.classList.add('hidden');
+    wrapper.classList.remove('hidden');
+
+    // Inisialisasi Fabric Canvas
+    if (fbCanvas) fbCanvas.dispose();
+    fbCanvas = new fabric.Canvas('watermarkCanvas', {
+        width: viewport.width,
+        height: viewport.height,
+        backgroundImage: new fabric.Image(canvas)
+    });
+
+    // Tambah Objek Watermark Awal
+    wmObject = new fabric.IText(document.getElementById('wmText').value, {
+        left: viewport.width / 2,
+        top: viewport.height / 2,
+        fontFamily: 'Helvetica',
+        fontSize: 40,
+        fill: document.getElementById('wmColor').value,
+        opacity: document.getElementById('wmOpacity').value,
+        originX: 'center',
+        originY: 'center',
+        angle: 0
+    });
+
+    fbCanvas.add(wmObject);
+    fbCanvas.setActiveObject(wmObject);
+}
+
+// 2. Update Teks/Warna dari Input ke Preview
+function updateWM() {
+    if (!wmObject) return;
+    wmObject.set({
+        text: document.getElementById('wmText').value,
+        fill: document.getElementById('wmColor').value,
+        opacity: parseFloat(document.getElementById('wmOpacity').value)
+    });
+    fbCanvas.renderAll();
+}
+
+// 3. Simpan PDF dengan Koordinat dari Preview
+async function saveWatermarkedPDF() {
+    if (!originalPdfDoc || !wmObject) return alert("Pilih PDF dulu!");
+
     const btn = document.getElementById('watermarkBtn');
-
-    if (input.files.length === 0) return alert("Pilih file PDF terlebih dahulu!");
-
+    btn.innerText = "Memproses Seluruh Halaman...";
     btn.disabled = true;
-    btn.innerText = "Memproses...";
 
     try {
-        const file = input.files[0];
-        const arrayBuffer = await file.arrayBuffer();
+        const pages = originalPdfDoc.getPages();
+        const font = await originalPdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
         
-        // Load dokumen menggunakan pdf-lib
-        const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
-        const pages = pdfDoc.getPages();
-        const font = await pdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+        // Ambil data dari Preview (Fabric)
+        const wmData = {
+            text: wmObject.text,
+            x: wmObject.left,
+            y: fbCanvas.height - wmObject.top, // PDFLib koordinat Y dari bawah ke atas
+            fontSize: wmObject.fontSize * (wmObject.scaleX || 1),
+            angle: -wmObject.angle, // PDFLib rotasi berlawanan arah
+            opacity: parseFloat(wmObject.opacity),
+            color: hexToRgb(wmObject.fill)
+        };
 
         pages.forEach(page => {
-            const { width, height } = page.getSize();
-            
-            // Gambar teks di tengah halaman secara diagonal
-            page.drawText(text, {
-                x: width / 4,
-                y: height / 2,
-                size: fontSize,
+            page.drawText(wmData.text, {
+                x: wmData.x - (wmData.fontSize * 2), // Penyesuaian origin
+                y: wmData.y,
+                size: wmData.fontSize,
                 font: font,
-                color: PDFLib.rgb(0.7, 0.7, 0.7), // Warna abu-abu
-                opacity: opacity,
-                rotate: PDFLib.degrees(45), // Miring 45 derajat
+                color: PDFLib.rgb(wmData.color.r, wmData.color.g, wmData.color.b),
+                opacity: wmData.opacity,
+                rotate: PDFLib.degrees(wmData.angle),
             });
         });
 
-        const pdfBytes = await pdfDoc.save();
-        saveFile(URL.createObjectURL(new Blob([pdfBytes])), `Watermarked_${file.name}`);
-        alert("Berhasil menambahkan watermark!");
-
-    } catch (error) {
-        console.error(error);
-        alert("Gagal memproses watermark. Pastikan file tidak rusak.");
+        const pdfBytes = await originalPdfDoc.save();
+        saveFile(URL.createObjectURL(new Blob([pdfBytes])), "Watermarked_Interactive.pdf");
+        alert("Selesai! Watermark diterapkan di semua halaman.");
+    } catch (e) {
+        console.error(e);
+        alert("Gagal menyimpan PDF.");
     } finally {
+        btn.innerText = "Download PDF Ber-Watermark";
         btn.disabled = false;
-        btn.innerText = "Tambah Watermark";
     }
+}
+
+// Helper: Konversi HEX ke RGB untuk PDFLib
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16) / 255,
+        g: parseInt(result[2], 16) / 255,
+        b: parseInt(result[3], 16) / 255
+    } : { r: 0, g: 0, b: 0 };
 }
 
 // Helper untuk download file

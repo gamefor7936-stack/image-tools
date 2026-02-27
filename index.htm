@@ -13,6 +13,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <!-- Library untuk Rendering PDF ke Gambar -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
 </head>
 <body class="bg-gray-50 font-sans">
 
@@ -204,37 +205,42 @@
                 <p id="pdfToImgProgress" class="text-xs text-center mt-2 text-blue-600 font-medium hidden"></p>
             </div>
 
-            <!-- KARTU 6: PDF WATERMARK -->
-            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-                <div class="mb-4 text-teal-500">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                </div>
-                <h3 class="text-xl font-semibold mb-2">PDF Watermark</h3>
-                <p class="text-gray-500 text-xs mb-4">Tambahkan teks pelindung di setiap halaman dokumen.</p>
-
-                <input type="file" id="watermarkInput" accept="application/pdf" class="block w-full text-sm mb-4 file:rounded-lg file:border-0 file:bg-teal-50 file:text-teal-700"/>
-
-                <div class="space-y-3">
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-600 uppercase">Teks Watermark:</label>
-                        <input type="text" id="watermarkText" placeholder="CONTOH: DRAFT" class="w-full p-2 border rounded text-sm focus:ring-teal-500 outline-none">
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-2">
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-600 uppercase">Ukuran:</label>
-                            <input type="number" id="watermarkFontSize" value="50" class="w-full p-2 border rounded text-sm">
+            <!-- KARTU 6: PDF WATERMARK INTERACTIVE -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100 col-span-full">
+                <h3 class="text-xl font-semibold mb-4 text-teal-600">PDF Watermark Pro (Interactive Preview)</h3>
+                
+                <div class="grid lg:grid-cols-2 gap-8">
+                    <!-- Kolom Kiri: Controls -->
+                    <div class="space-y-4">
+                        <input type="file" id="watermarkInput" accept="application/pdf" class="block w-full text-sm mb-4" onchange="initWatermarkPreview()"/>
+                        
+                        <div class="bg-gray-50 p-4 rounded-lg space-y-3">
+                            <input type="text" id="wmText" value="MILIK SAYA" placeholder="Teks Watermark" class="w-full p-2 border rounded" oninput="updateWM()">
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500">WARNA:</label>
+                                    <input type="color" id="wmColor" value="#808080" class="w-full h-10 p-1 border rounded" oninput="updateWM()">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500">OPACITY:</label>
+                                    <input type="range" id="wmOpacity" min="0" max="1" step="0.1" value="0.4" class="w-full" oninput="updateWM()">
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-600 uppercase">Transparansi (0-1):</label>
-                            <input type="number" id="watermarkOpacity" value="0.3" step="0.1" min="0" max="1" class="w-full p-2 border rounded text-sm">
+
+                        <p class="text-[10px] text-gray-500 italic">💡 Geser, putar, atau perbesar teks langsung di area preview sebelah kanan.</p>
+                        <button onclick="saveWatermarkedPDF()" id="watermarkBtn" class="w-full bg-teal-600 text-white py-3 rounded-lg font-bold hover:bg-teal-700 shadow-lg">Download PDF Ber-Watermark</button>
+                    </div>
+
+                    <!-- Kolom Kanan: Live Preview Area -->
+                    <div class="flex flex-col items-center bg-gray-200 p-4 rounded-xl border-2 border-dashed border-gray-300 min-h-[400px]">
+                        <span id="previewLoading" class="text-gray-400 mt-40">Pilih PDF untuk melihat preview</span>
+                        <div id="canvasWrapper" class="relative hidden shadow-2xl">
+                            <canvas id="watermarkCanvas"></canvas>
                         </div>
                     </div>
                 </div>
-
-                <button onclick="addWatermark()" id="watermarkBtn" class="w-full bg-teal-600 text-white py-2.5 rounded-lg font-bold hover:bg-teal-700 mt-4 transition-all shadow-md">Tambah Watermark</button>
             </div>
         </div>
 
