@@ -14,6 +14,7 @@
     <!-- Library untuk Rendering PDF ke Gambar -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body class="bg-gray-50 font-sans">
 
@@ -241,6 +242,55 @@
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- KARTU 7: QR CODE GENERATOR -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+                <div class="mb-4 text-indigo-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor font-bold">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">QR Code Generator</h3>
+                <input type="text" id="qrText" placeholder="Masukkan Link atau Teks" class="w-full p-2 border rounded text-sm mb-4">
+                <div id="qrcode" class="flex justify-center mb-4"></div>
+                <button onclick="generateQR()" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-bold hover:bg-indigo-700">Buat QR Code</button>
+            </div>
+
+            <!-- KARTU 8: CASE CONVERTER & WORD COUNT -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+                <div class="mb-4 text-pink-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Case Converter</h3>
+                <textarea id="textContent" rows="3" class="w-full p-2 border rounded text-sm mb-2" placeholder="Ketik atau tempel teks di sini..." oninput="countText()"></textarea>
+                <div class="flex justify-between text-[10px] text-gray-500 mb-3">
+                    <span>Kata: <b id="wordCount">0</b></span>
+                    <span>Karakter: <b id="charCount">0</b></span>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="convertCase('upper')" class="bg-gray-200 p-1 rounded text-[10px] font-bold">HURUF BESAR</button>
+                    <button onclick="convertCase('lower')" class="bg-gray-200 p-1 rounded text-[10px] font-bold">huruf kecil</button>
+                </div>
+            </div>
+
+            <!-- KARTU 9: PASSWORD GENERATOR -->
+            <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+                <div class="mb-4 text-slate-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">Password Generator</h3>
+                <div class="flex mb-4">
+                    <input type="text" id="passOutput" readonly class="w-full p-2 bg-gray-100 border rounded-l text-sm font-mono text-blue-600 font-bold">
+                    <button onclick="copyPass()" class="bg-gray-200 px-3 rounded-r border-y border-r text-xs">Copy</button>
+                </div>
+                <input type="range" id="passLength" min="8" max="32" value="16" class="w-full mb-2">
+                <p class="text-[10px] text-center mb-4 text-gray-500">Panjang: <span id="lenVal">16</span> karakter</p>
+                <button onclick="generatePass()" class="w-full bg-slate-800 text-white py-2 rounded-lg font-bold">Buat Password Aman</button>
             </div>
         </div>
 

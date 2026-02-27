@@ -551,6 +551,62 @@ function hexToRgb(hex) {
     } : { r: 0, g: 0, b: 0 };
 }
 
+// --- QR CODE GENERATOR ---
+let qrInstance = null;
+function generateQR() {
+    const text = document.getElementById('qrText').value;
+    const container = document.getElementById('qrcode');
+    if (!text) return alert("Masukkan teks atau link!");
+    
+    container.innerHTML = ""; // Bersihkan QR sebelumnya
+    qrInstance = new QRCode(container, {
+        text: text,
+        width: 128,
+        height: 128,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+    });
+}
+
+// --- CASE CONVERTER & WORD COUNT ---
+function countText() {
+    const text = document.getElementById('textContent').value;
+    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    document.getElementById('wordCount').innerText = words;
+    document.getElementById('charCount').innerText = text.length;
+}
+
+function convertCase(type) {
+    const area = document.getElementById('textContent');
+    if (type === 'upper') area.value = area.value.toUpperCase();
+    if (type === 'lower') area.value = area.value.toLowerCase();
+    countText();
+}
+
+// --- PASSWORD GENERATOR ---
+document.getElementById('passLength')?.addEventListener('input', (e) => {
+    document.getElementById('lenVal').innerText = e.target.value;
+});
+
+function generatePass() {
+    const length = document.getElementById('passLength').value;
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
+    let retVal = "";
+    for (let i = 0, n = charset.length; i < length; ++i) {
+        retVal += charset.charAt(Math.floor(Math.random() * n));
+    }
+    document.getElementById('passOutput').value = retVal;
+}
+
+function copyPass() {
+    const copyText = document.getElementById("passOutput");
+    if (!copyText.value) return;
+    copyText.select();
+    navigator.clipboard.writeText(copyText.value);
+    alert("Password berhasil disalin!");
+}
+
 // Helper untuk download file
 function saveFile(url, fileName) {
     const link = document.createElement('a');
