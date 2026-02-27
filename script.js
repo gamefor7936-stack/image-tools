@@ -624,12 +624,15 @@ function getYoutubeThumb() {
 
     if (match && match[2].length == 11) {
         const videoId = match[2];
+        // Kita gunakan resolusi tertinggi (maxresdefault)
         const thumbUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+        
         img.src = thumbUrl;
-        preview.classList.remove('hidden');
-        btn.classList.add('hidden');
+        preview.classList.remove('hidden'); // Tampilkan area preview
+        btn.innerText = "Ganti Thumbnail"; // Ubah teks tombol agar user tahu bisa input lagi
     } else {
-        alert("Link YouTube tidak valid!");
+        alert("Link YouTube tidak valid! Pastikan link benar (contoh: https://www.youtube.com/watch?v=xxxx)");
+        preview.classList.add('hidden');
     }
 }
 
