@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Password Generator - MARK_Tools</title>
+<meta name="description" content="Generate highly secure, random passwords instantly. Protect your online accounts with customizable length and character sets.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232563eb'/%3E%3Cpath d='M4 19V5l8 8 8-8v14' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../js/history.js"></script>
+</head>
+<body class="bg-gray-50 p-6">
+<div class="max-w-xl mx-auto">
+<a class="text-blue-500 text-sm mb-4 inline-block" href="/">← Back to home</a>
+<div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+<div class="mb-4 text-slate-700">
+<svg class="h-10 w-10" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<h3 class="text-xl font-semibold mb-2">Password Generator</h3>
+<div class="flex mb-4">
+<input class="w-full p-2 bg-gray-100 border rounded-l text-sm font-mono text-blue-600 font-bold" id="passOutput" readonly="" type="text"/>
+<button class="bg-gray-200 px-3 rounded-r border-y border-r text-xs" onclick="copyPass()">Copy</button>
+</div>
+<input class="w-full mb-2" id="passLength" max="32" min="8" type="range" value="16"/>
+<p class="text-[10px] text-center mb-4 text-gray-500">Length: <span id="lenVal">16</span> characters</p>
+<button class="w-full bg-slate-800 text-white py-2 rounded-lg font-bold" onclick="generatePass()">Generate strong password</button>
+</div>
+<section class="mt-12">
+<div class="flex items-center gap-2 mb-4 px-4">
+<svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<h3 class="font-bold text-slate-700">Recent history</h3>
+</div>
+<div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm" id="historyList">
+</div>
+</section>
+</div>
+<script>
+        document.getElementById('passLength')?.addEventListener('input', (e) => {
+            document.getElementById('lenVal').innerText = e.target.value;
+        });
+
+        function generatePass() {
+            const length = document.getElementById('passLength').value;
+            const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
+            let retVal = "";
+            for (let i = 0, n = charset.length; i < length; ++i) {
+                retVal += charset.charAt(Math.floor(Math.random() * n));
+            }
+            document.getElementById('passOutput').value = retVal;
+        }
+
+        function copyPass() {
+            const copyText = document.getElementById("passOutput");
+            if (!copyText.value) return;
+            copyText.select();
+            navigator.clipboard.writeText(copyText.value);
+            alert("Password copied to clipboard.");
+        }
+
+        window.onload = () => {
+            renderHistoryUI('Password Generator');
+        };
+    </script>
+<script src="../js/main.js"></script></body>
+</html>

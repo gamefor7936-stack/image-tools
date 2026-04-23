@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>Watermark PDF Pro - MARK_Tools</title>
+    <meta name="description" content="Add custom text or logo watermarks to your PDF documents. Features live preview and precise positioning. 100% safe and processed on your device.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232563eb'/%3E%3Cpath d='M4 19V5l8 8 8-8v14' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/history.js"></script>
+    
+    <style>
+        .glass-dark { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body class="bg-slate-50 p-6 font-sans text-slate-800">
+
+<div class="max-w-6xl mx-auto">
+    <!-- Navbar Mini -->
+    <div class="flex justify-between items-center mb-6">
+        <a class="text-blue-600 font-bold text-sm flex items-center gap-2 hover:underline" href="../index.html">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+            Back to Home
+        </a>
+    </div>
+
+    <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100">
+        <h3 class="text-2xl font-black mb-8 text-teal-600 tracking-tight">PDF Watermark Pro</h3>
+        
+        <div class="grid lg:grid-cols-12 gap-8">
+            
+            <!-- CONTROLS (Left) -->
+            <div class="lg:col-span-4 space-y-6">
+                <!-- Input File -->
+                <label class="w-full border-2 border-dashed border-teal-300 rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer bg-teal-50 hover:bg-teal-100 transition">
+                    <span class="text-teal-600 font-bold text-sm mb-1">1. Choose PDF File</span>
+                    <input accept="application/pdf" class="hidden" id="watermarkInput" onchange="initWatermarkPreview()" type="file"/>
+                </label>
+
+                <!-- Tools (Hidden until PDF is loaded) -->
+                <div id="editorControls" class="opacity-50 pointer-events-none transition-all space-y-4">
+                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Watermark Text</label>
+                            <input class="w-full p-3 border rounded-xl text-sm font-bold focus:ring-2 focus:ring-teal-400 outline-none" id="wmText" oninput="updateWM()" type="text" value="CONFIDENTIAL"/>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Color</label>
+                                <input class="w-full h-10 p-1 border rounded-lg cursor-pointer" id="wmColor" oninput="updateWM()" type="color" value="#808080"/>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Opacity</label>
+                                <input class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-teal-500 mt-3" id="wmOpacity" max="1" min="0" oninput="updateWM()" step="0.1" type="range" value="0.4"/>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-3">
+                        <button class="flex-1 bg-white border border-slate-300 text-slate-700 py-3 rounded-xl text-xs font-bold hover:bg-slate-50 shadow-sm" onclick="addTextWM()">+ Add Text</button>
+                        <input accept="image/png, image/jpeg" class="hidden" id="imgWMInput" onchange="addImageWM(this)" type="file"/>
+                        <button class="flex-1 bg-white border border-slate-300 text-slate-700 py-3 rounded-xl text-xs font-bold hover:bg-slate-50 shadow-sm" onclick="document.getElementById('imgWMInput').click()">+ Add Logo</button>
+                    </div>
+                </div>
+
+                <p class="text-[10px] text-slate-400 italic">💡 Tip: Drag, rotate, and scale items directly on the document preview.</p>
+                <button class="w-full bg-teal-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-teal-700 transition shadow-lg shadow-teal-500/30 disabled:opacity-50 disabled:cursor-not-allowed" id="watermarkBtn" onclick="saveWatermarkedPDF()" disabled>
+                    Apply & Download PDF
+                </button>
+            </div>
+
+            <!-- PREVIEW (Right) -->
+            <div class="lg:col-span-8 flex flex-col items-center bg-slate-800 p-6 rounded-3xl border-4 border-slate-100 shadow-inner min-h-[500px] relative overflow-hidden">
+                <div id="previewLoading" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 opacity-30 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                    <span class="text-sm font-bold uppercase tracking-widest">Select a PDF to start</span>
+                </div>
+                
+                <div class="relative hidden shadow-2xl transition-all" id="canvasWrapper">
+                    <canvas id="watermarkCanvas"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- History Section -->
+    <section class="mt-12 max-w-6xl mx-auto">
+        <h3 class="font-bold text-slate-700 mb-4 px-4 uppercase tracking-widest text-xs">Recent History</h3>
+        <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm" id="historyList"></div>
+    </section>
+</div>
+
+<script>
+    // Setup PDF.js worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    let fbCanvas;
+    let wmObject;
+    let originalPdfDoc;
+
+    async function initWatermarkPreview() {
+        const input = document.getElementById('watermarkInput');
+        const loadingText = document.getElementById('previewLoading');
+        const wrapper = document.getElementById('canvasWrapper');
+        const btn = document.getElementById('watermarkBtn');
+
+        if (!input.files[0]) return;
+        
+        loadingText.innerHTML = "<span class='animate-pulse text-white'>Loading Document...</span>";
+        wrapper.classList.add('hidden');
+        
+        try {
+            const file = input.files[0];
+            const arrayBuffer = await file.arrayBuffer();
+            
+            // Load in PDF-lib for later saving
+            originalPdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+            
+            // Load in PDF.js for visual preview
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            const page = await pdf.getPage(1);
+            
+            // Render at scale 1.0 to match PDF dimensions precisely
+            const viewport = page.getViewport({ scale: 1.0 });
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            
+            await page.render({ canvasContext: context, viewport: viewport }).promise;
+
+            loadingText.classList.add('hidden');
+            wrapper.classList.remove('hidden');
+            document.getElementById('editorControls').classList.remove('opacity-50', 'pointer-events-none');
+            btn.disabled = false;
+
+            if (fbCanvas) fbCanvas.dispose();
+            
+            fbCanvas = new fabric.Canvas('watermarkCanvas', {
+                width: viewport.width,
+                height: viewport.height,
+                backgroundImage: new fabric.Image(canvas)
+            });
+
+            // Set default origin to Top-Left for accurate math later
+            fabric.Object.prototype.originX = 'left';
+            fabric.Object.prototype.originY = 'top';
+
+            wmObject = new fabric.IText(document.getElementById('wmText').value, {
+                left: viewport.width / 4,
+                top: viewport.height / 2,
+                fontFamily: 'Helvetica',
+                fontSize: 60,
+                fill: document.getElementById('wmColor').value,
+                opacity: parseFloat(document.getElementById('wmOpacity').value),
+                transparentCorners: false,
+                cornerColor: '#0d9488',
+                cornerStrokeColor: '#ffffff',
+                borderColor: '#0d9488',
+                cornerSize: 12,
+                padding: 10
+            });
+
+            fbCanvas.add(wmObject);
+            fbCanvas.setActiveObject(wmObject);
+            
+            // Update UI settings when selecting object
+            fbCanvas.on('selection:created', updateUIFromObject);
+            fbCanvas.on('selection:updated', updateUIFromObject);
+
+        } catch (e) {
+            console.error(e);
+            alert("Failed to load PDF. Please ensure it's not encrypted.");
+            loadingText.innerHTML = "Select a PDF to start";
+        }
+    }
+
+    function updateUIFromObject(e) {
+        const obj = e.selected[0];
+        wmObject = obj;
+        if (obj.type === 'i-text' || obj.type === 'text') {
+            document.getElementById('wmText').value = obj.text;
+            // RGB to HEX formatting
+            let color = obj.fill;
+            document.getElementById('wmColor').value = color.length === 7 ? color : '#000000';
+        }
+        document.getElementById('wmOpacity').value = obj.opacity;
+    }
+
+    function updateWM() {
+        const activeObj = fbCanvas.getActiveObject() || wmObject;
+        if (!activeObj) return;
+        
+        if (activeObj.type === 'i-text' || activeObj.type === 'text') {
+            activeObj.set({
+                text: document.getElementById('wmText').value,
+                fill: document.getElementById('wmColor').value,
+            });
+        }
+        activeObj.set('opacity', parseFloat(document.getElementById('wmOpacity').value));
+        fbCanvas.renderAll();
+    }
+
+    function addTextWM() {
+        if (!fbCanvas) return;
+        const newText = new fabric.IText('New text', {
+            left: 50, top: 50,
+            fontFamily: 'Helvetica',
+            fontSize: 40,
+            fill: document.getElementById('wmColor').value,
+            opacity: parseFloat(document.getElementById('wmOpacity').value)
+        });
+        fbCanvas.add(newText);
+        fbCanvas.setActiveObject(newText);
+    }
+
+    function addImageWM(input) {
+        if (!input.files[0] || !fbCanvas) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            fabric.Image.fromURL(e.target.result, (img) => {
+                img.scaleToWidth(200);
+                img.set({
+                    left: 50, top: 50,
+                    opacity: parseFloat(document.getElementById('wmOpacity').value)
+                });
+                fbCanvas.add(img);
+                fbCanvas.setActiveObject(img);
+                // Attach raw DataURL to the object for PDF-lib embedding later
+                img.customDataUrl = e.target.result; 
+                fbCanvas.renderAll();
+            });
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+
+    // --- LOGIKA UTAMA: PENYIMPANAN PDF PRESISI ---
+    async function saveWatermarkedPDF() {
+        if (!originalPdfDoc || !fbCanvas) return alert("Please load a PDF first.");
+
+        const btn = document.getElementById('watermarkBtn');
+        btn.innerText = "PROCESSING PDF...";
+        btn.disabled = true;
+
+        try {
+            const pages = originalPdfDoc.getPages();
+            const font = await originalPdfDoc.embedFont(PDFLib.StandardFonts.HelveticaBold);
+            const fabricObjects = fbCanvas.getObjects();
+            const canvasHeight = fbCanvas.height;
+
+            // 1. PRE-EMBED IMAGES (Mencegah loop Asynchronous Bug)
+            const embeddedImages = {};
+            for (const obj of fabricObjects) {
+                if (obj.type === 'image' && obj.customDataUrl && !embeddedImages[obj.customDataUrl]) {
+                    const dataUrl = obj.customDataUrl;
+                    let pdfImg;
+                    if (dataUrl.startsWith('data:image/png')) {
+                        pdfImg = await originalPdfDoc.embedPng(dataUrl);
+                    } else {
+                        pdfImg = await originalPdfDoc.embedJpg(dataUrl);
+                    }
+                    embeddedImages[dataUrl] = pdfImg; // Simpan di memori
+                }
+            }
+
+            // 2. TERAPKAN WATERMARK KE SEMUA HALAMAN
+            for (const page of pages) {
+                // Dimensi asli halaman (PDF bisa berbeda ukuran tiap halamannya)
+                const { width: pW, height: pH } = page.getSize();
+                // Hitung rasio jika halaman PDF tidak sama dengan halaman 1 (Preview)
+                const ratioX = pW / fbCanvas.width;
+                const ratioY = pH / fbCanvas.height;
+
+                for (const obj of fabricObjects) {
+                    // Ambil koordinat akurat (Bounding Box)
+                    let br = obj.getBoundingRect();
+                    
+                    // X dan Y dihitung menggunakan rasio
+                    let x = br.left * ratioX;
+                    // Y PDF dimulai dari BAWAH. Fabric dimulai dari ATAS.
+                    let y = pH - (br.top * ratioY) - (br.height * ratioY);
+
+                    if (obj.type === 'i-text' || obj.type === 'text') {
+                        page.drawText(obj.text, {
+                            x: x,
+                            // Adjust Y untuk baseline font PDF-lib
+                            y: y + (br.height * ratioY * 0.2), 
+                            size: (obj.fontSize * obj.scaleX) * ratioX,
+                            font: font,
+                            color: PDFLib.rgb(...hexToPdfRgb(obj.fill)),
+                            opacity: obj.opacity,
+                        });
+                    }
+                    else if (obj.type === 'image') {
+                        const pdfImg = embeddedImages[obj.customDataUrl];
+                        if (pdfImg) {
+                            page.drawImage(pdfImg, {
+                                x: x,
+                                y: y,
+                                width: br.width * ratioX,
+                                height: br.height * ratioY,
+                                opacity: obj.opacity
+                            });
+                        }
+                    }
+                }
+            }
+
+            // 3. EXPORT, HISTORY & REDIRECT MONETISASI
+            const pdfBytes = await originalPdfDoc.save();
+            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+            const fileName = `Watermarked_${document.getElementById('watermarkInput').files[0].name}`;
+            
+            if (typeof addToHistory === 'function') {
+                const historyId = await addToHistory('Watermark Pro', fileName, blob);
+                window.location.href = `../go.html?id=${historyId}`;
+            } else {
+                saveFile(URL.createObjectURL(blob), fileName);
+            }
+
+        } catch (e) {
+            console.error(e);
+            alert("Failed to process the PDF: " + e.message);
+        } finally {
+            btn.innerText = "Apply & Download PDF";
+            btn.disabled = false;
+        }
+    }
+
+    // Helper: HEX to PDF-Lib RGB (Skala 0.0 sampai 1.0)
+    function hexToPdfRgb(hex) {
+        if(!hex || hex === '') return [0,0,0];
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? [
+            parseInt(result[1], 16) / 255,
+            parseInt(result[2], 16) / 255,
+            parseInt(result[3], 16) / 255
+        ] :[0, 0, 0];
+    }
+
+    window.onload = () => { if(typeof renderHistoryUI === 'function') renderHistoryUI('Watermark Pro'); };
+</script>
+</body>
+</html>

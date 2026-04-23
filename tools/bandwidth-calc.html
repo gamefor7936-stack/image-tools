@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bandwidth & Download Time Calculator - MARK_Tools</title>
+    <meta name="description" content="Calculate file download and transfer times accurately. Convert between Megabits (Mbps) and Megabytes (MB/s) for network planning.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232563eb'/%3E%3Cpath d='M4 19V5l8 8 8-8v14' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    
+    <!-- Framework & Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/history.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700&display=swap');
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .font-sans { font-family: 'Inter', sans-serif; }
+        .glass-dark { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+        .term-input { background: #0f172a; border: 1px solid #334155; color: #10b981; font-family: 'JetBrains Mono', monospace; transition: all 0.3s; }
+        .term-input:focus { border-color: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); outline: none; }
+        
+        /* Animasi Progress Bar Palsu untuk Visual */
+        @keyframes progress-flow { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .progress-flow { background: linear-gradient(90deg, #0f172a 25%, #10b981 50%, #0f172a 75%); background-size: 200% 100%; animation: progress-flow 3s infinite linear; }
+    </style>
+</head>
+<body class="bg-[#0b1120] text-slate-300 font-sans min-h-screen flex flex-col">
+
+    <nav class="bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-800">
+        <div class="container mx-auto px-6 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="/" class="text-emerald-500 font-black text-xl tracking-tighter">MARK_Tools</a>
+                <span class="text-slate-600">|</span>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Network & Dev</span>
+            </div>
+            <a href="/" class="text-xs font-bold text-slate-400 hover:text-emerald-400 transition">BACK TO HOME</a>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8 flex-grow flex flex-col lg:flex-row gap-6">
+        
+        <!-- LEFT COLUMN: INPUT -->
+        <div class="w-full lg:w-1/3 flex flex-col gap-6">
+            <div class="glass-dark p-6 rounded-2xl border-t-4 border-t-emerald-500">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 bg-emerald-500/20 text-emerald-400 rounded-lg flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold text-white">Transfer Calculator</h1>
+                        <p class="text-[10px] text-slate-400 uppercase tracking-widest">File Download Time</p>
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- File Size Input -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">File Size</label>
+                        <div class="flex gap-2">
+                            <input type="number" id="fileSize" value="50" min="0" step="any" class="w-2/3 p-3 rounded-lg term-input text-lg text-center" oninput="calculateTime()">
+                            <select id="fileUnit" class="w-1/3 p-3 rounded-lg term-input text-sm appearance-none text-center cursor-pointer" onchange="calculateTime()">
+                                <option value="MB">MB</option>
+                                <option value="GB">GB</option>
+                                <option value="TB">TB</option>
+                                <option value="KB">KB</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Internet Speed Input -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Internet Speed (Bandwidth)</label>
+                        <div class="flex gap-2">
+                            <input type="number" id="speedValue" value="100" min="0" step="any" class="w-2/3 p-3 rounded-lg term-input text-lg text-center" oninput="calculateTime()">
+                            <select id="speedUnit" class="w-1/3 p-3 rounded-lg term-input text-sm appearance-none text-center cursor-pointer" onchange="calculateTime()">
+                                <option value="Mbps">Mbps</option>
+                                <option value="MBps">MB/s</option>
+                                <option value="Gbps">Gbps</option>
+                                <option value="Kbps">Kbps</option>
+                            </select>
+                        </div>
+                        <p class="text-[9px] text-slate-500 mt-2 italic">* Mbps = Megabits per second (Usually used by ISP/WiFi).<br>* MB/s = Megabytes per second (Usually visible during download).</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Buttons -->
+            <div class="flex gap-3">
+                <button onclick="exportReport('pdf')" id="btnExportPdf" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-slate-900 py-3 rounded-xl font-black uppercase text-xs tracking-widest transition shadow-lg flex flex-col items-center justify-center gap-1">
+                    <span class="text-lg">📄</span> Export PDF
+                </button>
+                <button onclick="exportReport('word')" id="btnExportWord" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black uppercase text-xs tracking-widest transition shadow-lg flex flex-col items-center justify-center gap-1">
+                    <span class="text-lg">📝</span> Export Word
+                </button>
+            </div>
+            
+            <div class="glass-dark p-4 rounded-xl">
+                <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Calculation History</h4>
+                <div id="historyList" class="space-y-2 max-h-40 overflow-y-auto pr-1"></div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: RESULT -->
+        <div class="w-full lg:w-2/3 glass-dark rounded-3xl p-6 md:p-10 flex flex-col justify-center">
+            
+            <h3 class="text-xl font-bold text-white mb-6 border-b border-slate-700 pb-4">Transfer Time Estimation</h3>
+
+            <!-- Main Time Result -->
+            <div class="bg-[#020617] border border-emerald-500/30 rounded-2xl p-8 text-center relative overflow-hidden mb-8 shadow-2xl shadow-emerald-900/20">
+                <div class="absolute inset-0 progress-flow opacity-10"></div>
+                <p id="resTime" class="text-4xl md:text-6xl font-black text-emerald-400 font-mono relative z-10">
+                    00:00:04
+                </p>
+                <p id="resText" class="text-slate-400 mt-4 text-sm relative z-10">4 Seconds</p>
+            </div>
+
+            <!-- Detail Breakdown -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-slate-800/40 p-5 rounded-xl border border-slate-700">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Actual File Size (Bytes)</p>
+                    <p id="resBytes" class="text-lg font-mono text-white">52,428,800 Bytes</p>
+                </div>
+                
+                <div class="bg-slate-800/40 p-5 rounded-xl border border-slate-700">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Actual Download Speed</p>
+                    <p id="resRealSpeed" class="text-lg font-mono text-emerald-400 font-bold">12.5 MB/s</p>
+                </div>
+            </div>
+
+            <!-- Technical Notes -->
+            <div class="mt-8 pt-6 border-t border-slate-800 text-xs text-slate-500 leading-relaxed">
+                <p class="font-bold text-slate-400 mb-2 uppercase tracking-widest text-[10px]">Technical Notes:</p>
+                <ul class="list-disc pl-4 space-y-1">
+                    <li>1 Byte (B) = 8 bits (b). Therefore, 100 Mbps (Megabits) speed equals maximum download speed of 12.5 MB/s (Megabytes).</li>
+                    <li>The above estimate assumes your connection is stable and the server does not limit download speed (No Throttling).</li>
+                    <li>Usually add error margin around 10-15% in real world due to <i>network overhead</i>.</li>
+                </ul>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Init
+        window.onload = () => {
+            const savedState = sessionStorage.getItem('bwState');
+            if (savedState) {
+                const state = JSON.parse(savedState);
+                document.getElementById('fileSize').value = state.fs;
+                document.getElementById('fileUnit').value = state.fu;
+                document.getElementById('speedValue').value = state.sv;
+                document.getElementById('speedUnit').value = state.su;
+            }
+            calculateTime();
+            if(typeof renderHistoryUI === 'function') renderHistoryUI('Bandwidth Calc');
+        };
+
+        function calculateTime() {
+            const fsVal = parseFloat(document.getElementById('fileSize').value) || 0;
+            const fu = document.getElementById('fileUnit').value;
+            const svVal = parseFloat(document.getElementById('speedValue').value) || 0;
+            const su = document.getElementById('speedUnit').value;
+
+            // Save State
+            sessionStorage.setItem('bwState', JSON.stringify({ fs: fsVal, fu: fu, sv: svVal, su: su }));
+
+            if (fsVal === 0 || svVal === 0) {
+                document.getElementById('resTime').innerText = "00:00:00";
+                document.getElementById('resText').innerText = "0 Seconds";
+                return;
+            }
+
+            // 1. Convert File Size to Pure Bytes
+            // KB = 1024 Bytes, MB = 1024^2, GB = 1024^3, TB = 1024^4
+            let totalBytes = 0;
+            if (fu === 'KB') totalBytes = fsVal * 1024;
+            else if (fu === 'MB') totalBytes = fsVal * Math.pow(1024, 2);
+            else if (fu === 'GB') totalBytes = fsVal * Math.pow(1024, 3);
+            else if (fu === 'TB') totalBytes = fsVal * Math.pow(1024, 4);
+
+            // 2. Convert Speed to Bits per Second (bps)
+            // Kbps = 1000 bps, Mbps = 1000^2, Gbps = 1000^3
+            // MBps (Megabytes/sec) = 1000^2 * 8 bps
+            let speedBps = 0;
+            if (su === 'Kbps') speedBps = svVal * 1000;
+            else if (su === 'Mbps') speedBps = svVal * Math.pow(1000, 2);
+            else if (su === 'Gbps') speedBps = svVal * Math.pow(1000, 3);
+            else if (su === 'MBps') speedBps = svVal * Math.pow(1000, 2) * 8; // Multiply by 8 because 1 Byte = 8 bits
+
+            // Speed in Bytes per second (For UI)
+            const speedBytesPerSec = speedBps / 8;
+
+            // 3. Time = (Total Bytes * 8) / Speed bps
+            const totalBits = totalBytes * 8;
+            const totalSeconds = totalBits / speedBps;
+
+            // Format Output
+            formatTime(totalSeconds);
+            
+            document.getElementById('resBytes').innerText = Math.round(totalBytes).toLocaleString('en-US') + " Bytes";
+            
+            // Format Actual Speed (MB/s)
+            let displaySpeed = (speedBytesPerSec / Math.pow(1024, 2)).toFixed(2);
+            document.getElementById('resRealSpeed').innerText = `${displaySpeed} MB/s`;
+        }
+
+        function formatTime(seconds) {
+            if (!isFinite(seconds) || seconds < 0) return;
+            
+            const d = Math.floor(seconds / (3600*24));
+            const h = Math.floor(seconds % (3600*24) / 3600);
+            const m = Math.floor(seconds % 3600 / 60);
+            const s = Math.floor(seconds % 60);
+
+            // Digital Format 00:00:00
+            let digital = "";
+            if (d > 0) digital += String(d).padStart(2, '0') + ":";
+            digital += String(h).padStart(2, '0') + ":";
+            digital += String(m).padStart(2, '0') + ":";
+            digital += String(s).padStart(2, '0');
+
+            // Text Format (1 Day, 2 Hours, etc)
+            let text =[];
+            if (d > 0) text.push(`${d} Day(s)`);
+            if (h > 0) text.push(`${h} Hour(s)`);
+            if (m > 0) text.push(`${m} Minute(s)`);
+            if (s > 0 || text.length === 0) text.push(`${s} Second(s)`);
+
+            document.getElementById('resTime').innerText = digital;
+            document.getElementById('resText').innerText = text.join(', ');
+        }
+
+        // --- EXPORT PDF & WORD ---
+        async function exportReport(format) {
+            const btnPdf = document.getElementById('btnExportPdf');
+            const btnWord = document.getElementById('btnExportWord');
+            btnPdf.disabled = true; btnWord.disabled = true;
+
+            const fsVal = document.getElementById('fileSize').value;
+            const fu = document.getElementById('fileUnit').value;
+            const svVal = document.getElementById('speedValue').value;
+            const su = document.getElementById('speedUnit').value;
+            const resTime = document.getElementById('resText').innerText;
+            const resSpeed = document.getElementById('resRealSpeed').innerText;
+
+            const tableData = [['File Size Input', `${fsVal} ${fu}`],
+                ['Network Bandwidth Input', `${svVal} ${su}`],['Actual Download Speed', resSpeed],
+                ['Estimated Transfer Time', resTime]
+            ];
+
+            let finalBlob, finalFileName;
+
+            try {
+                if (format === 'pdf') {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF('p', 'mm', 'a4'); 
+                    doc.setFont("courier", "bold").setFontSize(20);
+                    doc.text("BANDWIDTH TRANSFER REPORT", 105, 20, { align: "center" });
+                    doc.setFontSize(11).setFont("courier", "normal");
+                    doc.text(`Date : ${new Date().toLocaleString()}`, 14, 35);
+
+                    doc.autoTable({
+                        startY: 45, head: [['Parameter', 'Calculation Result']],
+                        body: tableData, theme: 'grid',
+                        styles: { font: 'courier', fontSize: 10, cellPadding: 4 },
+                        headStyles: { fillColor:[16, 185, 129] }
+                    });
+
+                    finalBlob = doc.output('blob');
+                    finalFileName = `Bandwidth_Report.pdf`;
+
+                } else if (format === 'word') {
+                    if (typeof window.docx === 'undefined') throw new Error("Library docx not ready yet.");
+
+                    const tableRows =[
+                        new window.docx.TableRow({
+                            tableHeader: true,
+                            children:[
+                                new window.docx.TableCell({ children:[new window.docx.Paragraph({text: "Parameter", bold: true})], shading: { fill: "10b981" } }),
+                                new window.docx.TableCell({ children:[new window.docx.Paragraph({text: "Calculation Result", bold: true})], shading: { fill: "10b981" } })
+                            ]
+                        }),
+                        ...tableData.map(row => new window.docx.TableRow({
+                            children:[
+                                new window.docx.TableCell({ children:[new window.docx.Paragraph(row[0])] }),
+                                new window.docx.TableCell({ children:[new window.docx.Paragraph(row[1])] })
+                            ]
+                        }))
+                    ];
+
+                    const docWord = new window.docx.Document({
+                        sections:[{
+                            children:[
+                                new window.docx.Paragraph({ children:[new window.docx.TextRun({ text: "BANDWIDTH TRANSFER REPORT", bold: true, size: 28 })], alignment: window.docx.AlignmentType.CENTER, spacing: { after: 400 } }),
+                                new window.docx.Paragraph({ text: `Date : ${new Date().toLocaleString()}`, spacing: { after: 400 } }),
+                                new window.docx.Table({ width: { size: 100, type: window.docx.WidthType.PERCENTAGE }, rows: tableRows })
+                            ]
+                        }]
+                    });
+
+                    finalBlob = await window.docx.Packer.toBlob(docWord);
+                    finalFileName = `Bandwidth_Report.docx`;
+                }
+
+                if (typeof addToHistory === 'function') {
+                    const historyId = await addToHistory('Bandwidth Calc', finalFileName, finalBlob);
+                    window.location.href = `../go.html?id=${historyId}`;
+                } else {
+                    saveFile(URL.createObjectURL(finalBlob), finalFileName);
+                }
+
+            } catch(e) {
+                alert("Export failed: " + e.message);
+            } finally {
+                btnPdf.disabled = false; btnWord.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

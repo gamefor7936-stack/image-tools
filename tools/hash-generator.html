@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Integrity Checker & Hash Compare - MARK_Tools</title>
+    <meta name="description" content="Verify file integrity securely. Calculate MD5, SHA-1, SHA-256, and SHA-512 hashes locally in your browser. Compare checksums to detect corrupted files.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232563eb'/%3E%3Cpath d='M4 19V5l8 8 8-8v14' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    
+    <!-- Framework & Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/history.js"></script>
+    <!-- Library tambahan untuk MD5 support -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;600;700&display=swap');
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .font-sans { font-family: 'Inter', sans-serif; }
+        .glass-dark { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+        .result-box { background: #0f172a; border: 1px solid #334155; transition: all 0.3s; }
+        .match-glow { box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); border-color: #10b981 !important; }
+        .mismatch-glow { box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); border-color: #ef4444 !important; }
+    </style>
+</head>
+<body class="bg-[#0b1120] text-slate-300 font-sans min-h-screen">
+
+    <nav class="bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-800">
+        <div class="container mx-auto px-6 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="/" class="text-emerald-400 font-black text-xl tracking-tighter hover:opacity-80">MARK_Tools</a>
+                <span class="text-slate-600">|</span>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Network & Dev</span>
+            </div>
+            <a href="/" class="text-xs font-bold text-slate-400 hover:text-green-400 transition">BACK TO HOME</a>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-12">
+        <div class="max-w-4xl mx-auto">
+
+            <div class="text-center mb-10">
+                <h1 class="text-3xl font-extrabold text-white mb-2">File Integrity Checker</h1>
+                <p class="text-slate-400">Verify file authenticity and compare checksums locally.</p>
+            </div>
+
+            <!-- STEP 1: UPLOAD -->
+            <div class="glass-dark p-8 rounded-3xl mb-8">
+                <label for="fileInput" class="w-full h-44 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-slate-800/50 hover:border-green-500 transition-all group">
+                    <div id="uploadIcon" class="w-14 h-14 bg-slate-700/50 text-slate-500 rounded-full flex items-center justify-center mb-4 transition-all group-hover:scale-110 group-hover:bg-green-500/20 group-hover:text-green-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    </div>
+                    <p id="uploadText" class="text-sm font-bold text-slate-400">Click to Select or Drop File</p>
+                    <p id="selectedFileName" class="text-xs text-green-500 mt-2 font-mono hidden"></p>
+                    <input type="file" id="fileInput" class="hidden" onchange="processFile(this)">
+                </label>
+            </div>
+
+            <!-- STEP 2: COMPARE BOX (Will show after processing) -->
+            <div id="compareArea" class="hidden glass-dark p-6 rounded-2xl mb-8 border-t-4 border-indigo-500">
+                <label class="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 text-center">Compare with known hash (Checksum)</label>
+                <div class="relative">
+                    <input type="text" id="hashCompare" placeholder="Paste the hash code here to compare..." 
+                           class="w-full p-4 rounded-xl term-input text-sm text-center font-mono transition-all border-slate-700 bg-slate-900"
+                           oninput="performCompare()">
+                    
+                    <!-- Match Indicators -->
+                    <div id="statusMatch" class="hidden mt-4 animate-bounce text-center">
+                        <span class="bg-green-500 text-slate-900 px-4 py-1 rounded-full text-[10px] font-black tracking-widest uppercase">✅ Checksum Matched! File is Original</span>
+                    </div>
+                    <div id="statusMismatch" class="hidden mt-4 text-center">
+                        <span class="bg-red-500 text-white px-4 py-1 rounded-full text-[10px] font-black tracking-widest uppercase">❌ Mismatch! File might be altered</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3: RESULTS GRID -->
+            <div id="loadingSpinner" class="hidden text-center my-8">
+                <div class="inline-block w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin"></div>
+                <p class="mt-2 font-mono text-xs text-green-400">Processing Bitstream...</p>
+            </div>
+
+            <div id="resultArea" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                <!-- MD5 -->
+                <div class="result-box rounded-xl p-4 border border-slate-800" id="box-md5">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">MD5 Checksum</label>
+                    <div class="flex items-center gap-2 mt-2">
+                        <input type="text" id="md5Result" readonly class="w-full bg-transparent font-mono text-xs text-slate-300 outline-none truncate">
+                        <button onclick="copyText('md5Result')" class="text-[9px] font-bold bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded border border-slate-600 transition">COPY</button>
+                    </div>
+                </div>
+
+                <!-- SHA-1 -->
+                <div class="result-box rounded-xl p-4 border border-slate-800" id="box-sha1">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">SHA-1 Hash</label>
+                    <div class="flex items-center gap-2 mt-2">
+                        <input type="text" id="sha1Result" readonly class="w-full bg-transparent font-mono text-xs text-slate-300 outline-none truncate">
+                        <button onclick="copyText('sha1Result')" class="text-[9px] font-bold bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded border border-slate-600 transition">COPY</button>
+                    </div>
+                </div>
+
+                <!-- SHA-256 -->
+                <div class="result-box rounded-xl p-4 border border-slate-800 md:col-span-2" id="box-sha256">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">SHA-256 (Highly Recommended)</label>
+                    <div class="flex items-center gap-2 mt-2">
+                        <input type="text" id="sha256Result" readonly class="w-full bg-transparent font-mono text-xs text-slate-300 outline-none">
+                        <button onclick="copyText('sha256Result')" class="text-[9px] font-bold bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded border border-slate-600 transition">COPY</button>
+                    </div>
+                </div>
+
+                <!-- SHA-512 -->
+                <div class="result-box rounded-xl p-4 border border-slate-800 md:col-span-2" id="box-sha512">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">SHA-512 Hash</label>
+                    <div class="flex items-center gap-2 mt-2">
+                        <input type="text" id="sha512Result" readonly class="w-full bg-transparent font-mono text-[10px] text-slate-400 outline-none">
+                        <button onclick="copyText('sha512Result')" class="text-[9px] font-bold bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded border border-slate-600 transition">COPY</button>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        let calculatedHashes = {};
+
+        async function processFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            // UI Reset
+            document.getElementById('selectedFileName').innerText = `Selected: ${file.name} (${formatBytes(file.size)})`;
+            document.getElementById('selectedFileName').classList.remove('hidden');
+            document.getElementById('loadingSpinner').classList.remove('hidden');
+            document.getElementById('resultArea').classList.add('hidden');
+            document.getElementById('compareArea').classList.add('hidden');
+            document.getElementById('hashCompare').value = "";
+            resetCompareUI();
+
+            const reader = new FileReader();
+            reader.onload = async function() {
+                const arrayBuffer = reader.result;
+
+                try {
+                    // 1. Calculate MD5 using CryptoJS (Standard Web Crypto API doesn't support MD5)
+                    const wordArray = CryptoJS.lib.WordArray.create(arrayBuffer);
+                    calculatedHashes.md5 = CryptoJS.MD5(wordArray).toString();
+
+                    // 2. Calculate SHA using Native Web Crypto API (Faster for large files)
+                    calculatedHashes.sha1 = await calculateNative(arrayBuffer, 'SHA-1');
+                    calculatedHashes.sha256 = await calculateNative(arrayBuffer, 'SHA-256');
+                    calculatedHashes.sha512 = await calculateNative(arrayBuffer, 'SHA-512');
+
+                    // Update UI
+                    document.getElementById('md5Result').value = calculatedHashes.md5;
+                    document.getElementById('sha1Result').value = calculatedHashes.sha1;
+                    document.getElementById('sha256Result').value = calculatedHashes.sha256;
+                    document.getElementById('sha512Result').value = calculatedHashes.sha512;
+
+                    document.getElementById('loadingSpinner').classList.add('hidden');
+                    document.getElementById('resultArea').classList.remove('hidden');
+                    document.getElementById('compareArea').classList.remove('hidden');
+
+                } catch (e) {
+                    alert("Error processing file.");
+                    console.error(e);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        async function calculateNative(buffer, algo) {
+            const hashBuffer = await crypto.subtle.digest(algo, buffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // --- REAL-TIME COMPARISON LOGIC ---
+        function performCompare() {
+            const input = document.getElementById('hashCompare').value.trim().toLowerCase();
+            const matchEl = document.getElementById('statusMatch');
+            const mismatchEl = document.getElementById('statusMismatch');
+            const compareInputBox = document.getElementById('hashCompare');
+
+            if (!input) {
+                resetCompareUI();
+                return;
+            }
+
+            // Check if input matches ANY of our calculated hashes
+            const isMatched = Object.values(calculatedHashes).includes(input);
+
+            if (isMatched) {
+                matchEl.classList.remove('hidden');
+                mismatchEl.classList.add('hidden');
+                compareInputBox.classList.add('match-glow');
+                compareInputBox.classList.remove('mismatch-glow');
+            } else {
+                matchEl.classList.add('hidden');
+                mismatchEl.classList.remove('hidden');
+                compareInputBox.classList.remove('match-glow');
+                compareInputBox.classList.add('mismatch-glow');
+            }
+        }
+
+        function resetCompareUI() {
+            document.getElementById('statusMatch').classList.add('hidden');
+            document.getElementById('statusMismatch').classList.add('hidden');
+            document.getElementById('hashCompare').classList.remove('match-glow', 'mismatch-glow');
+        }
+
+        function formatBytes(bytes, decimals = 2) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+
+        function copyText(id) {
+            const el = document.getElementById(id);
+            el.select();
+            navigator.clipboard.writeText(el.value);
+            alert("Copied to clipboard!");
+        }
+    </script>
+</body>
+</html>

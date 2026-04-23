@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>PDF to Image - MARK_Tools</title>
+    <meta name="description" content="Convert PDF pages to high-quality JPG or PNG images instantly. Download as a ZIP file. Fast, free, and secure client-side PDF converter.">
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232563eb'/%3E%3Cpath d='M4 19V5l8 8 8-8v14' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <!-- Scripts Internal -->
+    <script src="../js/main.js"></script>
+    <script src="../js/history.js"></script>
+</head>
+
+<body class="bg-gray-50 p-6">
+    <div class="max-w-xl mx-auto">
+        <a class="text-blue-500 text-sm mb-4 inline-block hover:underline font-medium" href="../index.html">← Back to
+            home</a>
+
+        <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+            <div class="mb-4 text-blue-400">
+                <svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                </svg>
+            </div>
+
+            <h3 class="text-xl font-semibold mb-2 text-slate-800">PDF to Image</h3>
+            <p class="text-gray-500 text-xs mb-6">Export every page of a PDF as a separate image file packed in a ZIP.
+            </p>
+
+            <input accept="application/pdf"
+                class="block w-full text-sm mb-4 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer text-slate-500"
+                id="pdfToImageInput" type="file" />
+
+            <div class="mb-6">
+                <label class="block text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-widest">Output
+                    format</label>
+                <select
+                    class="w-full p-3 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-400"
+                    id="imgOutputFormat">
+                    <option value="image/jpeg">JPG (Smaller size)</option>
+                    <option value="image/png">PNG (High Quality)</option>
+                </select>
+            </div>
+
+            <button
+                class="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/30 disabled:opacity-50"
+                id="pdfToImgBtn" onclick="convertPdfToImage()">Convert to images</button>
+
+            <p class="text-xs text-center mt-4 text-blue-600 font-bold uppercase tracking-widest hidden animate-pulse"
+                id="pdfToImgProgress"></p>
+        </div>
+
+        <!-- History Section -->
+        <section class="mt-12">
+            <div class="flex items-center gap-2 mb-4 px-4">
+                <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"
+                        stroke-width="2"></path>
+                </svg>
+                <h3 class="font-bold text-slate-700 uppercase tracking-widest text-[10px]">Recent history</h3>
+            </div>
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm" id="historyList"></div>
+        </section>
+    </div>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        async function convertPdfToImage() {
+            const input = document.getElementById('pdfToImageInput');
+            const btn = document.getElementById('pdfToImgBtn');
+            const progressText = document.getElementById('pdfToImgProgress');
+            const format = document.getElementById('imgOutputFormat').value;
+            const ext = format === 'image/jpeg' ? 'jpg' : 'png';
+
+            if (input.files.length === 0) return alert("Choose a PDF file first.");
+
+            btn.disabled = true;
+            btn.innerText = "READING PDF...";
+            progressText.classList.remove('hidden');
+
+            try {
+                const file = input.files[0];
+                const arrayBuffer = await file.arrayBuffer();
+
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                const pageCount = pdf.numPages;
+                const zip = new JSZip();
+
+                for (let i = 1; i <= pageCount; i++) {
+                    progressText.innerText = `RENDERING PAGE ${i} OF ${pageCount}...`;
+
+                    const page = await pdf.getPage(i);
+                    const viewport = page.getViewport({ scale: 2.0 }); // Skala 2x agar gambar tajam
+
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+
+                    await page.render({ canvasContext: context, viewport: viewport }).promise;
+
+                    const imageBlob = await new Promise(resolve => {
+                        canvas.toBlob(blob => resolve(blob), format, 0.9);
+                    });
+
+                    // Format ZIP file name for neatness (Page_01, Page_02, etc.)
+                    const pageNumber = i.toString().padStart(3, '0');
+                    zip.file(`Page_${pageNumber}.${ext}`, imageBlob);
+
+                    // Delay so browser doesn't hang
+                    await new Promise(resolve => setTimeout(resolve, 10));
+                }
+
+                progressText.innerText = "PACKING TO ZIP...";
+                const zipContent = await zip.generateAsync({ type: "blob" });
+
+                // Prevent file name result from becoming "document.pdf.zip"
+                const cleanFileName = file.name.replace('.pdf', '');
+                const finalFileName = `Images_${cleanFileName}.zip`;
+
+                // --- LOGIKA REDIRECT YANG BENAR ---
+                if (typeof addToHistory === 'function') {
+                    const historyId = await addToHistory('PDF to Image', finalFileName, zipContent);
+                    window.location.href = `../go.html?id=${historyId}`;
+                    return; // STOP SCRIPT HERE SO IT DOESN'T GO FURTHER
+                } else {
+                    // Fallback if history.js fails to load
+                    saveFile(URL.createObjectURL(zipContent), finalFileName);
+                    alert("Done! Files downloaded.");
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert("Conversion failed. The file may be corrupt or encrypted.");
+            } finally {
+                // Finally block akan dijalankan sebelum redirect benar-benar berpindah halaman
+                btn.disabled = false;
+                btn.innerText = "Convert to images";
+                progressText.classList.add('hidden');
+            }
+        }
+
+        window.onload = () => {
+            if (typeof renderHistoryUI === 'function') renderHistoryUI('PDF to Image');
+        };
+    </script>
+</body>
+
+</html>

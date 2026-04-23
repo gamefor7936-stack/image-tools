@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAC Address OUI Lookup - MARK_Tools</title>
+    <meta name="description" content="Free MAC Address OUI Lookup tool. Identify device manufacturers and vendor details instantly using our updated IEEE database registry.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232563eb'/%3E%3Cpath d='M4 19V5l8 8 8-8v14' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    
+    <!-- Framework & Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/history.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;600;700&display=swap');
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .font-sans { font-family: 'Inter', sans-serif; }
+        
+        .term-input { background: #0f172a; border: 1px solid #334155; color: #a855f7; font-family: 'JetBrains Mono', monospace; transition: all 0.3s; letter-spacing: 2px;}
+        .term-input:focus { border-color: #a855f7; box-shadow: 0 0 10px rgba(168, 85, 247, 0.2); outline: none; }
+        .glass-dark { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+    </style>
+</head>
+<body class="bg-[#0b1120] text-slate-300 font-sans min-h-screen flex flex-col">
+
+    <nav class="bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-800">
+        <div class="container mx-auto px-6 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="/" class="text-purple-500 font-black text-xl tracking-tighter hover:opacity-80">MARK_Tools</a>
+                <span class="text-slate-600">|</span>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Network & Dev</span>
+            </div>
+            <a href="/" class="text-xs font-bold text-slate-400 hover:text-purple-400 transition">BACK TO HOME</a>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8 flex-grow flex flex-col lg:flex-row gap-6">
+        
+        <div class="w-full lg:w-1/3 flex flex-col gap-6">
+            <div class="glass-dark p-6 rounded-2xl">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 bg-purple-500/20 text-purple-400 rounded-lg flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold text-white">MAC OUI Lookup</h1>
+                        <p class="text-[10px] text-slate-400 uppercase tracking-widest">Hardware Vendor Finder</p>
+                    </div>
+                </div>
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">MAC Address</label>
+                        <input type="text" id="macInput" class="w-full p-3 rounded-lg term-input text-xl text-center" placeholder="00:1A:2B:3C:4D:5E" oninput="formatMAC(event)" maxlength="17" onkeydown="if(event.key === 'Enter') lookupMAC()">
+                    </div>
+                    <button onclick="lookupMAC()" id="btnLookup" class="w-full bg-purple-600 hover:bg-purple-500 text-white py-3 rounded-xl font-black uppercase tracking-widest transition shadow-lg shadow-purple-900/50">
+                        Identify Device
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="exportReport('pdf')" id="btnExportPdf" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-slate-900 py-3 rounded-xl font-black uppercase text-xs tracking-widest transition shadow-lg flex flex-col items-center justify-center gap-1 disabled:opacity-50">
+                    <span class="text-lg">📄</span> Export PDF
+                </button>
+                <button onclick="exportReport('word')" id="btnExportWord" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black uppercase text-xs tracking-widest transition shadow-lg flex flex-col items-center justify-center gap-1 disabled:opacity-50">
+                    <span class="text-lg">📝</span> Export Word
+                </button>
+            </div>
+            
+            <div class="glass-dark p-4 rounded-xl">
+                <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Histori Pencarian</h4>
+                <div id="historyList" class="space-y-2 max-h-40 overflow-y-auto pr-1"></div>
+            </div>
+        </div>
+
+        <div class="w-full lg:w-2/3 glass-dark rounded-3xl p-6 md:p-10 flex flex-col relative overflow-hidden border-t-4 border-t-purple-500">
+            <div class="flex justify-between items-end border-b border-slate-700 pb-4 mb-8">
+                <h3 class="text-xl font-bold text-white">Vendor Details</h3>
+                <span id="connStatus" class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">AWAITING QUERY...</span>
+            </div>
+            <div id="detailsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 opacity-50 transition-opacity duration-500">
+                <div class="md:col-span-2 bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Company / Vendor Name</p>
+                    <p id="infoVendor" class="text-2xl font-black text-purple-400 font-mono">---</p>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">OUI Prefix</p>
+                    <p id="infoPrefix" class="text-lg font-mono text-white font-bold">---</p>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Assignment Block Size</p>
+                    <p id="infoType" class="text-lg font-mono text-white font-bold">---</p>
+                </div>
+                <div class="md:col-span-2">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Registered Address</p>
+                    <p id="infoAddress" class="text-sm font-mono text-slate-300 whitespace-pre-wrap">---</p>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Country</p>
+                    <p id="infoCountry" class="text-sm font-mono text-slate-300">---</p>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Database Source</p>
+                    <p id="infoUpdated" class="text-sm font-mono text-slate-300">IEEE Registry</p>
+                </div>
+            </div>
+            
+            <div class="mt-8 bg-[#020617] p-4 rounded-xl border border-slate-800">
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Raw API Response</p>
+                <div class="h-32 overflow-y-auto font-mono text-[10px] text-slate-400 whitespace-pre-wrap" id="rawJson">
+// Awaiting MAC Address input...
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let vendorData = null;
+        let lastMac = "";
+
+        window.onload = () => {
+            const savedState = sessionStorage.getItem('macState');
+            if (savedState) {
+                document.getElementById('macInput').value = savedState;
+                lookupMAC();
+            }
+            if(typeof renderHistoryUI === 'function') renderHistoryUI('MAC Lookup');
+        };
+
+        function formatMAC(e) {
+            let val = e.target.value.replace(/[^a-fA-F0-9]/g, '').toUpperCase();
+            e.target.value = (val.match(/.{1,2}/g) || []).join(':').substring(0, 17);
+        }
+
+        // --- LOGIKA UTAMA (VERSI FINAL DENGAN PROXY) ---
+        async function lookupMAC() {
+            const mac = document.getElementById('macInput').value;
+            const btn = document.getElementById('btnLookup');
+            const grid = document.getElementById('detailsGrid');
+            const status = document.getElementById('connStatus');
+            const rawJson = document.getElementById('rawJson');
+
+            if (mac.length < 8) return;
+
+            btn.disabled = true;
+            status.innerText = "QUERYING IEEE...";
+            grid.classList.add('opacity-50');
+            
+            sessionStorage.setItem('macState', mac);
+            lastMac = mac;
+
+            try {
+                // Menggunakan proxy allorigins.win untuk membungkus API teks biasa
+                const proxyUrl = 'https://api.allorigins.win/raw?url=';
+                const apiUrl = `https://api.macvendors.com/${mac}`;
+                
+                const response = await fetch(proxyUrl + encodeURIComponent(apiUrl));
+
+                if (response.status === 200) {
+                    const vendorName = await response.text();
+
+                    if (vendorName.includes("Not Found")) {
+                         throw new Error("MAC Address Not Found in Database.");
+                    }
+                    
+                    // Create our own data object for consistency
+                    const data = {
+                        company: vendorName,
+                        mac_prefix: mac.substring(0, 8)
+                    };
+
+                    vendorData = data; // Simpan untuk Export
+                    
+                    document.getElementById('infoVendor').innerText = data.company;
+                    document.getElementById('infoPrefix').innerText = data.mac_prefix;
+                    document.getElementById('infoType').innerText = "N/A";
+                    document.getElementById('infoAddress').innerText = "N/A";
+                    document.getElementById('infoCountry').innerText = "N/A";
+
+                    status.innerText = "DEVICE IDENTIFIED";
+                    status.className = "text-[10px] font-bold text-emerald-400 uppercase tracking-widest";
+                    rawJson.innerText = `Vendor Name: ${vendorName}`;
+
+                } else {
+                    throw new Error(`API or Proxy Error (Status: ${response.status})`);
+                }
+
+            } catch (error) {
+                vendorData = null;
+                document.getElementById('infoVendor').innerText = "NOT FOUND / ERROR";
+                status.innerText = "ERROR";
+                status.className = "text-[10px] font-bold text-red-500 uppercase tracking-widest";
+                rawJson.innerText = `Error: ${error.message}`;
+                console.error(error);
+            } finally {
+                btn.disabled = false;
+                grid.classList.remove('opacity-50');
+            }
+        }
+
+        // --- FUNGSI EXPORT (DISESUAIKAN DENGAN DATA TEKS) ---
+        async function exportReport(format) {
+            if (!vendorData) return alert("Belum ada data untuk diexport.");
+
+            const btnPdf = document.getElementById('btnExportPdf');
+            const btnWord = document.getElementById('btnExportWord');
+            btnPdf.disabled = true; btnWord.disabled = true;
+
+            // Data is simpler because this API only provides vendor name
+            const tableData = [
+                ['Queried MAC Address', lastMac],
+                ['OUI Prefix', vendorData.mac_prefix],
+                ['Vendor / Company', vendorData.company]
+            ];
+
+            let finalBlob, finalFileName;
+
+            try {
+                if (format === 'pdf') {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF('p', 'mm', 'a4'); 
+                    doc.setFont("courier", "bold").setFontSize(20);
+                    doc.text("HARDWARE VENDOR AUDIT REPORT", 105, 20, { align: "center" });
+                    doc.setFontSize(11).setFont("courier", "normal");
+                    doc.text(`Target MAC : ${lastMac}`, 14, 35);
+                    doc.text(`Date       : ${new Date().toLocaleString()}`, 14, 41);
+
+                    doc.autoTable({
+                        startY: 50, head: [['Device Property', 'Registered Data']],
+                        body: tableData, theme: 'grid',
+                        styles: { font: 'courier', fontSize: 10 },
+                        headStyles: { fillColor:[168, 85, 247] }
+                    });
+
+                    finalBlob = doc.output('blob');
+                    finalFileName = `MAC_Audit_${lastMac.replace(/:/g, '')}.pdf`;
+
+                } else if (format === 'word') {
+                    const tableRows = [
+                        new window.docx.TableRow({
+                            tableHeader: true,
+                            children:[
+                                new window.docx.TableCell({ children:[new window.docx.Paragraph({text: "Device Property", bold: true})], shading: { fill: "a855f7" } }),
+                                new window.docx.TableCell({ children:[new window.docx.Paragraph({text: "Registered Data", bold: true})], shading: { fill: "a855f7" } })
+                            ]
+                        }),
+                        ...tableData.map(row => new window.docx.TableRow({
+                            children:[
+                                new window.docx.TableCell({ children:[new window.docx.Paragraph(row[0])] }),
+                                new window.docx.TableCell({ children:[new window.docx.Paragraph(row[1])] })
+                            ]
+                        }))
+                    ];
+                    const docWord = new window.docx.Document({
+                        sections:[{
+                            children:[
+                                new window.docx.Paragraph({ children:[new window.docx.TextRun({ text: "HARDWARE VENDOR AUDIT REPORT", bold: true, size: 28 })], alignment: window.docx.AlignmentType.CENTER, spacing: { after: 400 } }),
+                                new window.docx.Paragraph({ text: `Target MAC : ${lastMac}`, spacing: { after: 400 } }),
+                                new window.docx.Table({ width: { size: 100, type: window.docx.WidthType.PERCENTAGE }, rows: tableRows })
+                            ]
+                        }]
+                    });
+                    finalBlob = await window.docx.Packer.toBlob(docWord);
+                    finalFileName = `MAC_Audit_${lastMac.replace(/:/g, '')}.docx`;
+                }
+                
+                if (typeof addToHistory === 'function') {
+                    const historyId = await addToHistory('MAC Lookup', finalFileName, finalBlob);
+                    window.location.href = `../go.html?id=${historyId}`;
+                } else {
+                    saveFile(URL.createObjectURL(finalBlob), finalFileName);
+                }
+
+            } catch(e) {
+                alert("Export failed: " + e.message);
+            } finally {
+                btnPdf.disabled = false; btnWord.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

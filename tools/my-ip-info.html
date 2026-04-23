@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What Is My IP & Network Info - MARK_Tools</title>
+    <meta name="description" content="What is my IP? Instantly check your public IPv4/IPv6 address, ISP, ASN, and precise Geo-Location data. Secure network audit tool.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232563eb'/%3E%3Cpath d='M4 19V5l8 8 8-8v14' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    
+    <!-- Framework & Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/history.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;600;700&display=swap');
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .font-sans { font-family: 'Inter', sans-serif; }
+        
+        .glass-dark { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+        .map-bg { background-image: radial-gradient(#334155 1px, transparent 1px); background-size: 20px 20px; }
+        
+        /* Pulse Animation for Live Status */
+        @keyframes pulse-glow { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+        .live-indicator { border-radius: 50%; animation: pulse-glow 2s infinite; }
+    </style>
+</head>
+<body class="bg-[#0b1120] text-slate-300 font-sans min-h-screen flex flex-col map-bg">
+
+    <!-- Navbar Dark -->
+    <nav class="bg-[#0f172a]/90 backdrop-blur-md sticky top-0 z-50 border-b border-slate-800">
+        <div class="container mx-auto px-6 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="/" class="text-emerald-500 font-black text-xl tracking-tighter hover:opacity-80">MARK_Tools</a>
+                <span class="text-slate-600">|</span>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Network & Dev</span>
+            </div>
+            <a href="/" class="text-xs font-bold text-slate-400 hover:text-emerald-400 transition">BACK TO HOME</a>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8 flex-grow flex flex-col lg:flex-row gap-6 relative z-10">
+        
+        <!-- KOLOM KIRI: MAIN IP DISPLAY & CONTROLS -->
+        <div class="w-full lg:w-1/3 flex flex-col gap-6">
+            
+            <div class="glass-dark p-8 rounded-3xl text-center relative overflow-hidden">
+                <!-- Status Badge -->
+                <div class="absolute top-4 left-4 flex items-center gap-2 bg-slate-800/80 px-3 py-1 rounded-full border border-slate-700">
+                    <div class="w-2 h-2 bg-emerald-500 live-indicator"></div>
+                    <span class="text-[9px] font-bold text-emerald-400 uppercase tracking-widest" id="connStatus">CONNECTED</span>
+                </div>
+
+                <div class="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-700 text-white rounded-2xl flex items-center justify-center mx-auto mt-6 mb-4 shadow-lg shadow-emerald-900/50">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
+                </div>
+                
+                <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Your Public IP Address</h2>
+                
+                <!-- IP Display -->
+                <div id="ipDisplay" class="text-3xl md:text-4xl font-black text-white font-mono tracking-tight mb-2">
+                    Loading...
+                </div>
+                
+                <p id="ipType" class="text-xs font-bold text-emerald-500 bg-emerald-500/10 inline-block px-3 py-1 rounded-full border border-emerald-500/20 mb-8">
+                    IPv4
+                </p>
+
+                <button onclick="fetchIpInfo()" id="btnRefresh" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-bold text-sm tracking-widest transition flex items-center justify-center gap-2 border border-slate-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                    Refresh Network Info
+                </button>
+            </div>
+
+            <!-- Export Buttons -->
+            <div class="flex gap-3">
+                <button onclick="exportReport('pdf')" id="btnExportPdf" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-slate-900 py-3 rounded-xl font-black uppercase text-xs tracking-widest transition shadow-lg shadow-emerald-900/50 flex flex-col items-center justify-center gap-1 disabled:opacity-50">
+                    <span class="text-lg">📄</span> Export PDF
+                </button>
+                <button onclick="exportReport('word')" id="btnExportWord" class="flex-1 bg-teal-600 hover:bg-teal-500 text-white py-3 rounded-xl font-black uppercase text-xs tracking-widest transition shadow-lg shadow-teal-900/50 flex flex-col items-center justify-center gap-1 disabled:opacity-50">
+                    <span class="text-lg">📝</span> Export Word
+                </button>
+            </div>
+            
+            <!-- History Area -->
+            <div class="glass-dark p-4 rounded-xl">
+                <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Histori Laporan</h4>
+                <div id="historyList" class="space-y-2 max-h-40 overflow-y-auto pr-1"></div>
+            </div>
+
+        </div>
+
+        <!-- KOLOM KANAN: DETAILED INFO -->
+        <div class="w-full lg:w-2/3 glass-dark rounded-3xl p-6 md:p-10 flex flex-col relative overflow-hidden border-t-4 border-t-emerald-500">
+            
+            <h3 class="text-xl font-bold text-white mb-8 border-b border-slate-700 pb-4">Advanced Network Details</h3>
+
+            <div id="detailsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 opacity-50 transition-opacity duration-500">
+                
+                <!-- ISP Info -->
+                <div>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                        Internet Service Provider
+                    </p>
+                    <p id="infoIsp" class="text-lg font-mono text-white font-bold">---</p>
+                    <p id="infoOrg" class="text-xs text-slate-400 mt-1">---</p>
+                </div>
+
+                <!-- ASN -->
+                <div>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" /></svg>
+                        Autonomous System (ASN)
+                    </p>
+                    <p id="infoAsn" class="text-lg font-mono text-emerald-400 font-bold">---</p>
+                </div>
+
+                <!-- Location -->
+                <div class="md:col-span-2 bg-slate-800/50 p-4 rounded-xl border border-slate-700">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-rose-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" /></svg>
+                        Geo-Location Data
+                    </p>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                            <p class="text-[10px] text-slate-500 uppercase mb-1">Country</p>
+                            <p id="infoCountry" class="font-bold text-white text-sm">---</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-500 uppercase mb-1">Region</p>
+                            <p id="infoRegion" class="font-bold text-white text-sm">---</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-500 uppercase mb-1">City</p>
+                            <p id="infoCity" class="font-bold text-white text-sm">---</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-500 uppercase mb-1">ZIP / Postal</p>
+                            <p id="infoZip" class="font-bold text-white text-sm">---</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coordinates -->
+                <div>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        Coordinates
+                    </p>
+                    <p id="infoCoords" class="text-sm font-mono text-slate-300">---, ---</p>
+                </div>
+
+                <!-- Timezone -->
+                <div>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        Timezone
+                    </p>
+                    <p id="infoTimezone" class="text-sm font-mono text-slate-300">---</p>
+                </div>
+
+            </div>
+            
+            <!-- Raw Payload Terminal -->
+            <div class="mt-8 bg-[#020617] p-4 rounded-xl border border-slate-800">
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 flex justify-between">
+                    <span>Raw JSON Payload</span>
+                    <span class="text-emerald-500">200 OK</span>
+                </p>
+                <div class="h-32 overflow-y-auto font-mono text-[10px] text-slate-400 whitespace-pre-wrap" id="rawJson">
+// Fetching data from routing server...
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Data Global untuk Export
+        let networkData = null;
+
+        // Auto Fetch saat halaman dimuat
+        window.onload = () => {
+            fetchIpInfo();
+            if(typeof renderHistoryUI === 'function') renderHistoryUI('IP Info');
+        };
+
+        async function fetchIpInfo() {
+            const btn = document.getElementById('btnRefresh');
+            const display = document.getElementById('ipDisplay');
+            const grid = document.getElementById('detailsGrid');
+            const status = document.getElementById('connStatus');
+            const rawJson = document.getElementById('rawJson');
+
+            btn.disabled = true;
+            status.innerText = "FETCHING...";
+            status.className = "text-[9px] font-bold text-yellow-400 uppercase tracking-widest";
+            display.innerText = "Scanning...";
+            grid.classList.add('opacity-50');
+
+            try {
+                // Menggunakan ipwho.is - 100% mendukung CORS untuk HTTPS (GitHub Pages)
+                const response = await fetch('https://ipwho.is/');
+                const data = await response.json();
+
+                if (data.success) {
+                    networkData = data; // Simpan untuk Export
+
+                    // Update UI Utama
+                    display.innerText = data.ip;
+                    document.getElementById('ipType').innerText = data.type || "IPv4";
+                    
+                    // Update Details Grid
+                    document.getElementById('infoIsp').innerText = data.connection.isp || "Unknown";
+                    document.getElementById('infoOrg').innerText = data.connection.org || "";
+                    document.getElementById('infoAsn').innerText = `AS${data.connection.asn || "---"}`;
+                    
+                    // Update Location
+                    document.getElementById('infoCountry').innerText = `${data.country} ${data.flag.emoji || ''}`;
+                    document.getElementById('infoRegion').innerText = data.region || "---";
+                    document.getElementById('infoCity').innerText = data.city || "---";
+                    document.getElementById('infoZip').innerText = data.postal || "---";
+                    
+                    // Misc
+                    document.getElementById('infoCoords').innerText = `${data.latitude}, ${data.longitude}`;
+                    document.getElementById('infoTimezone').innerText = `${data.timezone.id} (UTC ${data.timezone.utc})`;
+
+                    // Inject Raw JSON
+                    rawJson.innerText = JSON.stringify(data, null, 2);
+
+                    status.innerText = "SECURE";
+                    status.className = "text-[9px] font-bold text-emerald-400 uppercase tracking-widest";
+                    grid.classList.remove('opacity-50');
+                } else {
+                    throw new Error(data.message || "Gagal mendapatkan data.");
+                }
+
+            } catch (error) {
+                console.error(error);
+                display.innerText = "Error";
+                status.innerText = "OFFLINE";
+                status.className = "text-[9px] font-bold text-red-500 uppercase tracking-widest";
+                rawJson.innerText = `Error: ${error.message}\n\nSaran: Matikan AdBlocker jika data tidak muncul.`;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function exportReport(format) {
+            if (!networkData) return alert("Data belum tersedia.");
+
+            const btnPdf = document.getElementById('btnExportPdf');
+            const btnWord = document.getElementById('btnExportWord');
+            btnPdf.disabled = true; btnWord.disabled = true;
+
+            // Pemetaan data disesuaikan dengan format JSON ipwho.is
+            const tableData = [
+                ['IP Address', networkData.ip],
+                ['IP Type', networkData.type],
+                ['ISP', networkData.connection.isp],
+                ['ASN', `AS${networkData.connection.asn}`],
+                ['Country', networkData.country],
+                ['Region / State', networkData.region],
+                ['City', networkData.city],
+                ['Postal / ZIP', networkData.postal],
+                ['Coordinates', `${networkData.latitude}, ${networkData.longitude}`],
+                ['Timezone', `${networkData.timezone.id} (${networkData.timezone.utc})`]
+            ];
+
+            let finalBlob, finalFileName;
+
+            try {
+                if (format === 'pdf') {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF('p', 'mm', 'a4'); 
+                    doc.setFont("courier", "bold").setFontSize(20);
+                    doc.text("CLIENT NETWORK AUDIT REPORT", 105, 20, { align: "center" });
+                    doc.setFontSize(11).setFont("courier", "normal");
+                    doc.text(`Host IP : ${networkData.ip}`, 14, 35);
+                    doc.text(`Date    : ${new Date().toLocaleString()}`, 14, 41);
+
+                    doc.autoTable({
+                        startY: 50,
+                        head: [['Network Property', 'Detected Value']],
+                        body: tableData,
+                        theme: 'grid',
+                        styles: { font: 'courier', fontSize: 10 },
+                        headStyles: { fillColor:[16, 185, 129] }
+                    });
+
+                    finalBlob = doc.output('blob');
+                    finalFileName = `Network_Audit_${networkData.ip}.pdf`;
+
+                } else if (format === 'word') {
+                    if (typeof window.docx === 'undefined') throw new Error("Library docx tidak ditemukan.");
+
+                    const tableRows = [
+                        new window.docx.TableRow({
+                            tableHeader: true,
+                            children:[
+                                new window.docx.TableCell({ children:[new window.docx.Paragraph({text: "Network Property", bold: true})], shading: { fill: "10b981" } }),
+                                new window.docx.TableCell({ children:[new window.docx.Paragraph({text: "Detected Value", bold: true})], shading: { fill: "10b981" } })
+                            ]
+                        }),
+                        ...tableData.map(row => new window.docx.TableRow({
+                            children:[
+                                new window.docx.TableCell({ children:[new window.docx.Paragraph(row[0])] }),
+                                new window.docx.TableCell({ children:[new window.docx.Paragraph(row[1])] })
+                            ]
+                        }))
+                    ];
+
+                    const docWord = new window.docx.Document({
+                        sections:[{
+                            children:[
+                                new window.docx.Paragraph({ children:[new window.docx.TextRun({ text: "CLIENT NETWORK AUDIT REPORT", bold: true, size: 28 })], alignment: window.docx.AlignmentType.CENTER, spacing: { after: 400 } }),
+                                new window.docx.Paragraph({ text: `Host IP : ${networkData.ip}`, spacing: { after: 200 } }),
+                                new window.docx.Table({ width: { size: 100, type: window.docx.WidthType.PERCENTAGE }, rows: tableRows })
+                            ]
+                        }]
+                    });
+
+                    finalBlob = await window.docx.Packer.toBlob(docWord);
+                    finalFileName = `Network_Audit_${networkData.ip}.docx`;
+                }
+
+                if (typeof addToHistory === 'function') {
+                    const historyId = await addToHistory('IP Info', finalFileName, finalBlob);
+                    window.location.href = `../go.html?id=${historyId}`;
+                } else {
+                    saveFile(URL.createObjectURL(finalBlob), finalFileName);
+                }
+
+            } catch(e) {
+                alert("Export gagal: " + e.message);
+            } finally {
+                btnPdf.disabled = false; btnWord.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

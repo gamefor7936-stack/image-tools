@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Homepage -->
+  <url>
+    <loc>https://marktoolbox.com/</loc>
+    <priority>1.0</priority>
+  </url>
+  <!-- Tools - Add according to your file name -->
+  <url><loc>https://marktoolbox.com/tools/bandwidth-calc.html</loc><priority>0.8</priority></url>
+  <url><loc>https://marktoolbox.com/tools/base64.html</loc><priority>0.8</priority></url>
+  <url><loc>https://marktoolbox.com/tools/caseandwordcount.html</loc><priority>0.8</priority></url>
+  <url><loc>https://marktoolbox.com/tools/color-palette.html</loc><priority>0.8</priority></url>
+  <url><loc>https://marktoolbox.com/tools/compressor.html</loc><priority>0.8</priority></url>
+  <url><loc>https://marktoolbox.com/tools/css-gradient.html</loc><priority>0.8</priority></url>
+  <url><loc>https://marktoolbox.com/tools/exifremover.html</loc><priority>0.8</priority></url>
+  <url><loc>https://marktoolbox.com/tools/hash-generator.html</loc><priority>0.8</priority></url>
+  <url><loc>https://marktoolbox.com/tools/Image%20to%20PDF.html</loc><priority>0.8</priority></url>
+  <url><loc>https://marktoolbox.com/tools/ImageConverter.html</loc><priority>0.8</priority></url>
+  <url><loc>https://marktoolbox.com/tools/JSONformatter.html</loc><priority>0.8</priority></url>
+  <url><loc>https://marktoolbox.com/tools/mergePDF.html</loc><priority>0.8</priority></url>
+  <url><loc>https://marktoolbox.com/tools/splitPDF.html</loc><priority>0.8</priority></url>
+  <url><loc>https://marktoolbox.com/tools/ip-subnet-calc.html</loc><priority>0.9</priority></url>
+  <url><loc>https://marktoolbox.com/tools/doc-scanner.html</loc><priority>0.9</priority></url>
+  <url><loc>https://marktoolbox.com/tools/dns-lookup.html</loc><priority>0.8</priority></url>
+  <url><loc>https://marktoolbox.com/tools/hash-generator.html</loc><priority>0.8</priority></url>
+  <url><loc>https://marktoolbox.com/tools/invoice-generator.html</loc><priority>0.8</priority></url>
+  <url><loc>https://marktoolbox.com/tools/QRcode.html</loc><priority>0.8</priority></url>
+  <url><loc>https://marktoolbox.com/tools/ssl-checker.html</loc><priority>0.8</priority></url>
+  <url><loc>https://marktoolbox.com/tools/universal-converter.html</loc><priority>0.8</priority></url>
+  <url><loc>https://marktoolbox.com/tools/password-generator.html</loc><priority>0.8</priority></url>
+  <url><loc>https://marktoolbox.com/tools/image-resizer.html</loc><priority>0.8</priority></url>
+  <url><loc>https://marktoolbox.com/tools/video-to-gif.html</loc><priority>0.8</priority></url>
+  <url><loc>https://marktoolbox.com/tools/YTthumbdown.html</loc><priority>0.8</priority></url>
+  <!-- Legal Pages -->
+  <url><loc>https://marktoolbox.com/privacy.html</loc><priority>0.3</priority></url>
+  <url><loc>https://marktoolbox.com/about.html</loc><priority>0.3</priority></url>
+  <url><loc>https://marktoolbox.com/terms.html</loc><priority>0.3</priority></url>
+</urlset>

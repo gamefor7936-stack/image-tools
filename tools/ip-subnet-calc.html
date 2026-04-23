@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced IP Subnet Calculator - MARK_Tools</title>
+    <meta name="description" content="Advanced IPv4 Subnet and CIDR Calculator. Calculate network, broadcast, wildcard mask, and usable host range instantly. Export to PDF or Word.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232563eb'/%3E%3Cpath d='M4 19V5l8 8 8-8v14' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    
+    <!-- Framework & Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/history.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <!-- Library untuk Export DOCX -->
+    <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;600;700&display=swap');
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .font-sans { font-family: 'Inter', sans-serif; }
+        
+        .term-input { background: #0f172a; border: 1px solid #334155; color: #10b981; font-family: 'JetBrains Mono', monospace; transition: all 0.3s; }
+        .term-input:focus { border-color: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.2); outline: none; }
+        .glass-dark { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+    </style>
+</head>
+<body class="bg-[#0b1120] text-slate-300 font-sans min-h-screen flex flex-col">
+
+    <nav class="bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-800">
+        <div class="container mx-auto px-6 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="/" class="text-emerald-400 font-black text-xl tracking-tighter hover:opacity-80">MARK_Tools</a>
+                <span class="text-slate-600">|</span>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Network & Dev</span>
+            </div>
+            <a href="/" class="text-xs font-bold text-slate-400 hover:text-emerald-400 transition">BACK TO HOME</a>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8 flex-grow flex flex-col lg:flex-row gap-6">
+        
+        <!-- KOLOM KIRI: INPUT & CONTROLS -->
+        <div class="w-full lg:w-1/3 flex flex-col gap-6">
+            
+            <div class="glass-dark p-6 rounded-2xl">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 bg-emerald-500/20 text-emerald-400 rounded-lg flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" /></svg>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold text-white">IPv4 Calculator</h1>
+                        <p class="text-[10px] text-slate-400 uppercase tracking-widest">Subnet & CIDR Tool</p>
+                    </div>
+                </div>
+
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Host IP Address</label>
+                        <input type="text" id="ipInput" value="192.168.1.10" class="w-full p-3 rounded-lg term-input text-lg text-center tracking-widest" placeholder="192.168.1.1" oninput="calculateSubnet()">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-end mb-2">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Prefix / CIDR</label>
+                            <span id="cidrDisplay" class="text-emerald-400 font-mono font-bold text-lg">/24</span>
+                        </div>
+                        <input type="range" id="cidrSlider" min="1" max="32" value="24" class="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-emerald-500" oninput="updateCidrAndCalc()">
+                    </div>
+
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Subnet Mask</label>
+                        <select id="maskSelect" class="w-full p-3 rounded-lg term-input text-sm appearance-none text-center" onchange="updateMaskAndCalc()">
+                            <!-- Dibuat via JS -->
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Buttons (PDF & WORD) -->
+            <div class="flex gap-3">
+                <button onclick="exportReport('pdf')" id="btnExportPdf" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-slate-900 py-3 rounded-xl font-black uppercase text-xs tracking-widest transition shadow-lg shadow-emerald-900/50 flex flex-col items-center justify-center gap-1">
+                    <span class="text-lg">📄</span>
+                    Export PDF
+                </button>
+                <button onclick="exportReport('word')" id="btnExportWord" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black uppercase text-xs tracking-widest transition shadow-lg shadow-blue-900/50 flex flex-col items-center justify-center gap-1">
+                    <span class="text-lg">📝</span>
+                    Export Word
+                </button>
+            </div>
+            <p class="text-center text-[10px] text-slate-500 italic mb-4">Laporan akan otomatis disimpan di Histori sebelum dialihkan.</p>
+            
+            <!-- Area Histori Lokal -->
+            <div class="glass-dark p-4 rounded-xl">
+                <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Histori Laporan</h4>
+                <div id="historyList" class="space-y-2 max-h-40 overflow-y-auto pr-1"></div>
+            </div>
+
+        </div>
+
+        <!-- KOLOM KANAN: HASIL KALKULASI -->
+        <div class="w-full lg:w-2/3 glass-dark rounded-2xl p-6 md:p-8 flex flex-col justify-center">
+            
+            <div id="errorBanner" class="hidden bg-red-500/10 border border-red-500/50 text-red-400 p-4 rounded-lg text-sm mb-6 font-mono text-center">
+                Invalid IP Address format!
+            </div>
+
+            <div id="resultArea" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                <!-- Result Grid Items -->
+                <div class="border-b border-slate-700 pb-3">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Network Address</p>
+                    <p id="resNetwork" class="text-2xl font-mono text-white font-bold">192.168.1.0</p>
+                </div>
+                <div class="border-b border-slate-700 pb-3">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Broadcast Address</p>
+                    <p id="resBroadcast" class="text-2xl font-mono text-white font-bold">192.168.1.255</p>
+                </div>
+                <div class="md:col-span-2 border-b border-slate-700 pb-3 bg-slate-800/30 p-4 rounded-lg">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Usable Host IP Range</p>
+                    <p id="resRange" class="text-xl font-mono text-emerald-400 font-bold">192.168.1.1 - 192.168.1.254</p>
+                </div>
+                <div class="border-b border-slate-700 pb-3">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Total Hosts</p>
+                    <p id="resTotal" class="text-xl font-mono text-white">256</p>
+                </div>
+                <div class="border-b border-slate-700 pb-3">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Usable Hosts</p>
+                    <p id="resUsable" class="text-xl font-mono text-emerald-400 font-bold">254</p>
+                </div>
+                <div class="border-b border-slate-700 pb-3">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Subnet Mask</p>
+                    <p id="resMask" class="text-lg font-mono text-slate-300">255.255.255.0</p>
+                </div>
+                <div class="border-b border-slate-700 pb-3">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Wildcard Mask</p>
+                    <p id="resWildcard" class="text-lg font-mono text-slate-300">0.0.0.255</p>
+                </div>
+                <div class="border-b border-slate-700 pb-3">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">IP Class</p>
+                    <p id="resClass" class="text-lg font-mono text-slate-300">Class C</p>
+                </div>
+                <div class="border-b border-slate-700 pb-3">
+                    <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">IP Type</p>
+                    <p id="resType" class="text-lg font-mono text-slate-300">Private</p>
+                </div>
+            </div>
+
+            <!-- Binary Breakdown -->
+            <div id="binaryArea" class="mt-8 bg-[#0f172a] p-4 rounded-xl border border-slate-700 overflow-x-auto">
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Binary Representation</p>
+                <div class="space-y-2 text-xs font-mono">
+                    <div class="flex justify-between w-full min-w-[300px]">
+                        <span class="text-slate-400 w-16">IP:</span>
+                        <span id="binIp" class="text-emerald-400 tracking-widest"></span>
+                    </div>
+                    <div class="flex justify-between w-full min-w-[300px]">
+                        <span class="text-slate-400 w-16">Mask:</span>
+                        <span id="binMask" class="text-red-400 tracking-widest"></span>
+                    </div>
+                    <div class="flex justify-between w-full min-w-[300px]">
+                        <span class="text-slate-400 w-16">Net:</span>
+                        <span id="binNet" class="text-blue-400 tracking-widest"></span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Init & STATE RESTORATION
+        window.onload = () => {
+            initMaskSelect();
+            
+            // 1. Cek apakah ada State (Angka terakhir) yang tersimpan di Memory Browser
+            const savedState = sessionStorage.getItem('ipCalcState');
+            if (savedState) {
+                const state = JSON.parse(savedState);
+                document.getElementById('ipInput').value = state.ip;
+                document.getElementById('cidrSlider').value = state.cidr;
+                document.getElementById('maskSelect').value = state.cidr;
+                document.getElementById('cidrDisplay').innerText = "/" + state.cidr;
+            } else {
+                document.getElementById('maskSelect').value = document.getElementById('cidrSlider').value;
+            }
+
+            // 2. Lakukan kalkulasi secara otomatis saat kembali ke halaman
+            calculateSubnet();
+            
+            // 3. Render histori jika ada
+            if(typeof renderHistoryUI === 'function') renderHistoryUI('IP Calculator');
+        };
+
+        function initMaskSelect() {
+            const select = document.getElementById('maskSelect');
+            for(let i = 1; i <= 32; i++) {
+                let maskInt = ~0 << (32 - i);
+                let opt = document.createElement('option');
+                opt.value = i;
+                opt.innerText = `${intToIp(maskInt)} (/${i})`;
+                select.appendChild(opt);
+            }
+        }
+
+        function updateCidrAndCalc() {
+            const cidr = document.getElementById('cidrSlider').value;
+            document.getElementById('cidrDisplay').innerText = "/" + cidr;
+            document.getElementById('maskSelect').value = cidr;
+            calculateSubnet();
+        }
+
+        function updateMaskAndCalc() {
+            const cidr = document.getElementById('maskSelect').value;
+            document.getElementById('cidrSlider').value = cidr;
+            document.getElementById('cidrDisplay').innerText = "/" + cidr;
+            calculateSubnet();
+        }
+
+        function calculateSubnet() {
+            const ipStr = document.getElementById('ipInput').value.trim();
+            const cidr = parseInt(document.getElementById('cidrSlider').value);
+            const errBanner = document.getElementById('errorBanner');
+            const resultArea = document.getElementById('resultArea');
+            const binArea = document.getElementById('binaryArea');
+
+            const ipRegex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+            
+            if(!ipRegex.test(ipStr)) {
+                errBanner.classList.remove('hidden');
+                resultArea.classList.add('opacity-30', 'pointer-events-none');
+                binArea.classList.add('opacity-30');
+                return;
+            }
+
+            errBanner.classList.add('hidden');
+            resultArea.classList.remove('opacity-30', 'pointer-events-none');
+            binArea.classList.remove('opacity-30');
+
+            // SIMPAN STATE TERAKHIR (Agar tidak keriset saat kembali dari go.html)
+            sessionStorage.setItem('ipCalcState', JSON.stringify({ ip: ipStr, cidr: cidr }));
+
+            const ipInt = ipToInt(ipStr);
+            const maskInt = (~0 << (32 - cidr)) >>> 0; 
+            const wildcardInt = ~maskInt >>> 0;
+            const networkInt = (ipInt & maskInt) >>> 0;
+            const broadcastInt = (networkInt | wildcardInt) >>> 0;
+
+            const totalHosts = Math.pow(2, 32 - cidr);
+            let usableHosts = totalHosts - 2;
+            let firstHostInt = networkInt + 1;
+            let lastHostInt = broadcastInt - 1;
+
+            if (cidr === 32) { usableHosts = 1; firstHostInt = networkInt; lastHostInt = networkInt; } 
+            else if (cidr === 31) { usableHosts = 2; firstHostInt = networkInt; lastHostInt = broadcastInt; }
+
+            const octet1 = parseInt(ipStr.split('.')[0]);
+            const octet2 = parseInt(ipStr.split('.')[1]);
+            
+            let ipClass = "Class E";
+            if(octet1 >= 1 && octet1 <= 126) ipClass = "Class A";
+            else if(octet1 >= 128 && octet1 <= 191) ipClass = "Class B";
+            else if(octet1 >= 192 && octet1 <= 223) ipClass = "Class C";
+            else if(octet1 >= 224 && octet1 <= 239) ipClass = "Class D (Multicast)";
+
+            let ipType = "Public";
+            if (octet1 === 10 || (octet1 === 172 && octet2 >= 16 && octet2 <= 31) || (octet1 === 192 && octet2 === 168)) ipType = "Private";
+            else if (octet1 === 127) ipType = "Loopback (Localhost)";
+            else if (octet1 === 169 && octet2 === 254) ipType = "APIPA (Link-Local)";
+
+            // Update UI
+            document.getElementById('resNetwork').innerText = intToIp(networkInt);
+            document.getElementById('resBroadcast').innerText = intToIp(broadcastInt);
+            document.getElementById('resMask').innerText = intToIp(maskInt);
+            document.getElementById('resWildcard').innerText = intToIp(wildcardInt);
+            document.getElementById('resTotal').innerText = totalHosts.toLocaleString();
+            document.getElementById('resUsable').innerText = usableHosts.toLocaleString();
+            document.getElementById('resRange').innerText = `${intToIp(firstHostInt)} - ${intToIp(lastHostInt)}`;
+            document.getElementById('resClass').innerText = ipClass;
+            document.getElementById('resType').innerText = ipType;
+
+            document.getElementById('binIp').innerText = intToBinaryStr(ipInt);
+            document.getElementById('binMask').innerText = intToBinaryStr(maskInt);
+            document.getElementById('binNet').innerText = intToBinaryStr(networkInt);
+        }
+
+        // Helpers
+        function ipToInt(ip) { return ip.split('.').reduce((int, oct) => (int << 8) + parseInt(oct, 10), 0) >>> 0; }
+        function intToIp(int) { return[ (int >>> 24) & 255, (int >>> 16) & 255, (int >>> 8) & 255, int & 255 ].join('.'); }
+        function intToBinaryStr(int) {
+            let bin = (int >>> 0).toString(2).padStart(32, '0');
+            return `${bin.slice(0,8)}.${bin.slice(8,16)}.${bin.slice(16,24)}.${bin.slice(24,32)}`;
+        }
+
+        // --- EXPORT & REDIRECT LOGIC ---
+        async function exportReport(type) {
+            if(!document.getElementById('errorBanner').classList.contains('hidden')) return alert("Perbaiki IP Address terlebih dahulu!");
+            
+            const btnPdf = document.getElementById('btnExportPdf');
+            const btnWord = document.getElementById('btnExportWord');
+            const ip = document.getElementById('ipInput').value;
+            const cidr = document.getElementById('cidrSlider').value;
+            
+            btnPdf.disabled = true; btnWord.disabled = true;
+
+            const tableData = [['Network Address', document.getElementById('resNetwork').innerText],
+                ['Broadcast Address', document.getElementById('resBroadcast').innerText],['Usable Host Range', document.getElementById('resRange').innerText],['Subnet Mask', document.getElementById('resMask').innerText],
+                ['Wildcard Mask', document.getElementById('resWildcard').innerText],['Total Hosts', document.getElementById('resTotal').innerText],['Usable Hosts', document.getElementById('resUsable').innerText],['IP Class & Type', `${document.getElementById('resClass').innerText} (${document.getElementById('resType').innerText})`]
+            ];
+
+            let finalBlob, finalFileName;
+
+            try {
+                if (type === 'pdf') {
+                    // EXPORT PDF
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    
+                    doc.setFont("courier", "bold");
+                    doc.setFontSize(20);
+                    doc.text("NETWORK ROUTING REPORT", 105, 20, { align: "center" });
+                    doc.setFontSize(12);
+                    doc.setFont("courier", "normal");
+                    doc.text(`Target Host  : ${ip} /${cidr}`, 14, 40);
+                    doc.text(`Date         : ${new Date().toLocaleString()}`, 14, 47); // "Generated by" dihapus
+
+                    doc.autoTable({
+                        startY: 55,
+                        head: [['Network Parameter', 'Value']],
+                        body: tableData,
+                        theme: 'grid',
+                        styles: { font: 'courier', fontSize: 10 },
+                        headStyles: { fillColor:[16, 185, 129] } 
+                    });
+                    
+                    finalBlob = doc.output('blob');
+                    finalFileName = `IP_Report_${ip}_Subnet${cidr}.pdf`;
+
+                } else if (type === 'word') {
+                    // EXPORT WORD (DOCX)
+                    if (typeof window.docx === 'undefined') return alert("Library docx belum siap.");
+
+                    // Buat array table rows
+                    const tableRows =[
+                        new window.docx.TableRow({
+                            tableHeader: true,
+                            children:[
+                                new window.docx.TableCell({ children:[new window.docx.Paragraph({text: "Network Parameter", bold: true})], shading: { fill: "10b981" } }),
+                                new window.docx.TableCell({ children:[new window.docx.Paragraph({text: "Value", bold: true})], shading: { fill: "10b981" } }),
+                            ]
+                        }),
+                        ...tableData.map(row => new window.docx.TableRow({
+                            children: [
+                                new window.docx.TableCell({ children:[new window.docx.Paragraph(row[0])] }),
+                                new window.docx.TableCell({ children:[new window.docx.Paragraph(row[1])] }),
+                            ]
+                        }))
+                    ];
+
+                    const docWord = new window.docx.Document({
+                        sections: [{
+                            children: [
+                                new window.docx.Paragraph({ children:[new window.docx.TextRun({ text: "NETWORK ROUTING REPORT", bold: true, size: 32 })], alignment: window.docx.AlignmentType.CENTER, spacing: { after: 400 } }),
+                                new window.docx.Paragraph({ text: `Target Host  : ${ip} /${cidr}`, spacing: { after: 200 } }),
+                                new window.docx.Paragraph({ text: `Date         : ${new Date().toLocaleString()}`, spacing: { after: 400 } }), // "Generated by" dihapus
+                                new window.docx.Table({
+                                    width: { size: 100, type: window.docx.WidthType.PERCENTAGE },
+                                    rows: tableRows
+                                })
+                            ]
+                        }]
+                    });
+
+                    finalBlob = await window.docx.Packer.toBlob(docWord);
+                    finalFileName = `IP_Report_${ip}_Subnet${cidr}.docx`;
+                }
+
+                // Histori & Redirect (Monetisasi Iklan)
+                if (typeof addToHistory === 'function') {
+                    const historyId = await addToHistory('IP Calculator', finalFileName, finalBlob);
+                    window.location.href = `../go.html?id=${historyId}`;
+                } else {
+                    saveFile(URL.createObjectURL(finalBlob), finalFileName);
+                }
+
+            } catch(e) {
+                alert("Gagal mengexport file: " + e.message);
+            } finally {
+                btnPdf.disabled = false; btnWord.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Unit Converter - MARK_Tools</title>
+    <meta name="description" content="All-in-one Universal Unit Converter. Instantly convert data storage (Bytes to GB), network speeds, length, weight, time, and temperatures.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232563eb'/%3E%3Cpath d='M4 19V5l8 8 8-8v14' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    <!-- Framework & Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/history.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700&display=swap');
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .font-sans { font-family: 'Inter', sans-serif; }
+        .glass-dark { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+        .term-input { background: #0f172a; border: 1px solid #334155; color: #38bdf8; font-family: 'JetBrains Mono', monospace; transition: all 0.3s; }
+        .term-input:focus { border-color: #38bdf8; box-shadow: 0 0 10px rgba(56, 189, 248, 0.2); outline: none; }
+        
+        /* Hilangkan panah naik-turun pada input number */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    </style>
+</head>
+<body class="bg-[#0b1120] text-slate-300 font-sans min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-800">
+        <div class="container mx-auto px-6 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="/" class="text-blue-400 font-black text-xl tracking-tighter hover:opacity-80">MARK_Tools</a>
+                <span class="text-slate-600">|</span>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Omnitool Calculator</span>
+            </div>
+            <a href="/" class="text-xs font-bold text-slate-400 hover:text-blue-400 transition">BACK TO HOME</a>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8 flex-grow flex flex-col lg:flex-row gap-6">
+        
+        <!-- LEFT COLUMN: CATEGORY & SETTINGS -->
+        <div class="w-full lg:w-1/3 flex flex-col gap-6">
+            
+            <div class="glass-dark p-6 rounded-3xl border-t-4 border-t-blue-500">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 bg-blue-500/20 text-blue-400 rounded-lg flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold text-white">Universal Converter</h1>
+                        <p class="text-[10px] text-slate-400 uppercase tracking-widest">All Units in the World</p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Select Unit Category</label>
+                    <div class="grid grid-cols-2 gap-2" id="categoryGrid">
+                        <!-- Tombol Kategori akan di-generate oleh JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Buttons -->
+            <div class="flex gap-3">
+                <button onclick="exportReport('pdf')" id="btnExportPdf" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-slate-900 py-3 rounded-xl font-black uppercase text-xs tracking-widest transition shadow-lg flex flex-col items-center justify-center gap-1 disabled:opacity-50">
+                    <span class="text-lg">📄</span> Export PDF
+                </button>
+                <button onclick="exportReport('word')" id="btnExportWord" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-black uppercase text-xs tracking-widest transition shadow-lg flex flex-col items-center justify-center gap-1 disabled:opacity-50">
+                    <span class="text-lg">📝</span> Export Word
+                </button>
+            </div>
+            
+            <div class="glass-dark p-4 rounded-xl">
+                <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Conversion History</h4>
+                <div id="historyList" class="space-y-2 max-h-40 overflow-y-auto pr-1"></div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: CONVERSION WORKSPACE -->
+        <div class="w-full lg:w-2/3 glass-dark rounded-3xl p-6 md:p-12 flex flex-col relative overflow-hidden">
+            
+            <div class="text-center mb-10">
+                <h2 id="activeCategoryTitle" class="text-3xl font-black text-white uppercase tracking-tight">DATA STORAGE</h2>
+                <p id="activeCategoryDesc" class="text-slate-400 text-sm mt-2">Bit, Byte, Kilobyte, hingga Petabyte.</p>
+            </div>
+
+            <!-- Area Kalkulator Interaktif -->
+            <div class="bg-[#020617] p-6 md:p-10 rounded-2xl border border-slate-800 relative">
+                
+                <!-- Tombol Swap di Tengah -->
+                <button onclick="swapUnits()" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg shadow-blue-900/50 hover:bg-blue-500 transition-all z-10 hover:rotate-180 duration-500 border-4 border-[#020617]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>
+                </button>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-8 relative">
+                    
+                    <!-- BOX 1 (From) -->
+                    <div class="space-y-4">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest">FROM UNIT</label>
+                        <select id="unit1" class="w-full p-4 rounded-xl term-input text-sm appearance-none font-bold" onchange="convert(1)">
+                            <!-- Options JS -->
+                        </select>
+                        <input type="number" id="val1" class="w-full p-4 rounded-xl term-input text-3xl font-black bg-transparent border-b-2 border-slate-700 focus:border-blue-400 outline-none text-center" value="1" oninput="convert(1)">
+                    </div>
+
+                    <!-- KOTAK 2 (Ke) -->
+                    <div class="space-y-4 mt-8 md:mt-0">
+                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest">TO UNIT</label>
+                        <select id="unit2" class="w-full p-4 rounded-xl term-input text-sm appearance-none font-bold" onchange="convert(2)">
+                            <!-- Options JS -->
+                        </select>
+                        <input type="number" id="val2" class="w-full p-4 rounded-xl term-input text-3xl font-black bg-transparent border-b-2 border-slate-700 focus:border-blue-400 outline-none text-center" oninput="convert(2)">
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Rumus Formulasi -->
+            <div class="mt-8 bg-blue-900/10 border border-blue-500/20 p-4 rounded-xl text-center">
+                <p class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1">Formula Dasar</p>
+                <p id="formulaText" class="font-mono text-sm text-slate-300">1 Byte = 8 Bits</p>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // --- COMPLETE UNITS DATABASE ---
+        // Format: { name: multiplier (relative to base unit) }
+        const unitDB = {
+            data: {
+                title: "Data Storage (IT)", desc: "Memory and file storage units.", base: "Byte",
+                units: {
+                    "Bit (b)": 0.125, "Byte (B)": 1,
+                    "Kilobyte (KB)": 1000, "Kibibyte (KiB)": 1024,
+                    "Megabyte (MB)": 1e6, "Mebibyte (MiB)": 1048576,
+                    "Gigabyte (GB)": 1e9, "Gibibyte (GiB)": 1073741824,
+                    "Terabyte (TB)": 1e12, "Tebibyte (TiB)": 1099511627776,
+                    "Petabyte (PB)": 1e15
+                }
+            },
+            network: {
+                title: "Network Speed", desc: "Kecepatan transfer data jaringan (Bandwidth).", base: "bps",
+                units: {
+                    "Bits per sec (bps)": 1, "Kilobits per sec (Kbps)": 1000,
+                    "Megabits per sec (Mbps)": 1e6, "Gigabits per sec (Gbps)": 1e9,
+                    "Bytes per sec (B/s)": 8, "Megabytes per sec (MB/s)": 8e6,
+                    "Gigabytes per sec (GB/s)": 8e9
+                }
+            },
+            length: {
+                title: "Length & Distance", desc: "Length, distance, up to rare Astronomy units.", base: "Meter",
+                units: {
+                    "Millimeter (mm)": 0.001, "Centimeter (cm)": 0.01, "Meter (m)": 1, "Kilometer (km)": 1000,
+                    "Inch (in)": 0.0254, "Foot (ft)": 0.3048, "Yard (yd)": 0.9144, "Mile (mi)": 1609.34,
+                    "Nautical Mile (Knot)": 1852, "Fathom (ftm)": 1.8288, "League": 4828.03,
+                    "Light Year (ly)": 9.4607e15, "Parsec (pc)": 3.08567758e16, "Astronomical Unit (AU)": 1.4959787e11
+                }
+            },
+            weight: {
+                title: "Mass & Weight", desc: "Berat benda dan massa internasional.", base: "Gram",
+                units: {
+                    "Milligram (mg)": 0.001, "Gram (g)": 1, "Kilogram (kg)": 1000, "Metric Ton (t)": 1e6,
+                    "Ounce (oz)": 28.3495, "Pound (lb)": 453.592, "Stone": 6350.29, "Slug": 14593.9
+                }
+            },
+            temperature: {
+                title: "Temperature", desc: "Suhu cuaca dan termodinamika.", special: true, // Temperatur pakai rumus beda
+                units: { "Celsius (°C)": "C", "Fahrenheit (°F)": "F", "Kelvin (K)": "K", "Reaumur (°R)": "R" }
+            },
+            time: {
+                title: "Time & Duration", desc: "Time, duration, up to Millennium.", base: "Second",
+                units: {
+                    "Nanosecond (ns)": 1e-9, "Microsecond (μs)": 1e-6, "Millisecond (ms)": 0.001,
+                    "Second (s)": 1, "Minute (min)": 60, "Hour (h)": 3600, "Day (d)": 86400,
+                    "Week": 604800, "Month (30 days)": 2592000, "Year (365 days)": 31536000, 
+                    "Decade": 315360000, "Century": 3153600000, "Millennium": 31536000000
+                }
+            }
+        };
+
+        let currentCategory = "data";
+
+        window.onload = () => {
+            buildCategoryGrid();
+            loadCategory(currentCategory);
+            if(typeof renderHistoryUI === 'function') renderHistoryUI('Universal Converter');
+        };
+
+        function buildCategoryGrid() {
+            const grid = document.getElementById('categoryGrid');
+            Object.keys(unitDB).forEach(key => {
+                const btn = document.createElement('button');
+                btn.className = "cat-btn bg-slate-800 text-slate-400 p-3 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-700 hover:text-white transition text-left truncate";
+                btn.innerText = unitDB[key].title;
+                btn.onclick = () => loadCategory(key);
+                btn.id = "btnCat-" + key;
+                grid.appendChild(btn);
+            });
+        }
+
+        function loadCategory(key) {
+            currentCategory = key;
+            const data = unitDB[key];
+            
+            // Update UI Active Category
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('bg-blue-600', 'text-white'));
+            document.getElementById('btnCat-' + key).classList.add('bg-blue-600', 'text-white');
+            document.getElementById('activeCategoryTitle').innerText = data.title;
+            document.getElementById('activeCategoryDesc').innerText = data.desc;
+
+            // Isi Dropdown
+            const u1 = document.getElementById('unit1');
+            const u2 = document.getElementById('unit2');
+            u1.innerHTML = ""; u2.innerHTML = "";
+
+            Object.keys(data.units).forEach(unitName => {
+                u1.innerHTML += `<option value="${unitName}">${unitName}</option>`;
+                u2.innerHTML += `<option value="${unitName}">${unitName}</option>`;
+            });
+
+            // Set default (if there are more than 1 option)
+            if(Object.keys(data.units).length > 1) u2.selectedIndex = 1;
+
+            document.getElementById('val1').value = 1;
+            convert(1);
+        }
+
+        function swapUnits() {
+            const u1 = document.getElementById('unit1');
+            const u2 = document.getElementById('unit2');
+            const temp = u1.value;
+            u1.value = u2.value;
+            u2.value = temp;
+            convert(1);
+        }
+
+        function convert(sourceBox) {
+            const data = unitDB[currentCategory];
+            const val1 = parseFloat(document.getElementById('val1').value);
+            const val2 = parseFloat(document.getElementById('val2').value);
+            const name1 = document.getElementById('unit1').value;
+            const name2 = document.getElementById('unit2').value;
+            
+            const out1 = document.getElementById('val1');
+            const out2 = document.getElementById('val2');
+            const formulaText = document.getElementById('formulaText');
+
+            // Handle kotak kosong
+            if(sourceBox === 1 && isNaN(val1)) { out2.value = ""; return; }
+            if(sourceBox === 2 && isNaN(val2)) { out1.value = ""; return; }
+
+            // Logika Khusus Suhu (Temperature)
+            if (data.special) {
+                const type1 = data.units[name1];
+                const type2 = data.units[name2];
+                let tempC = 0; // Change to Celsius first
+
+                if (sourceBox === 1) {
+                    if(type1==='C') tempC = val1;
+                    else if(type1==='F') tempC = (val1 - 32) * 5/9;
+                    else if(type1==='K') tempC = val1 - 273.15;
+                    else if(type1==='R') tempC = val1 * 5/4;
+
+                    if(type2==='C') out2.value = formatNumber(tempC);
+                    else if(type2==='F') out2.value = formatNumber((tempC * 9/5) + 32);
+                    else if(type2==='K') out2.value = formatNumber(tempC + 273.15);
+                    else if(type2==='R') out2.value = formatNumber(tempC * 4/5);
+                } else {
+                    if(type2==='C') tempC = val2;
+                    else if(type2==='F') tempC = (val2 - 32) * 5/9;
+                    else if(type2==='K') tempC = val2 - 273.15;
+                    else if(type2==='R') tempC = val2 * 5/4;
+
+                    if(type1==='C') out1.value = formatNumber(tempC);
+                    else if(type1==='F') out1.value = formatNumber((tempC * 9/5) + 32);
+                    else if(type1==='K') out1.value = formatNumber(tempC + 273.15);
+                    else if(type1==='R') out1.value = formatNumber(tempC * 4/5);
+                }
+                formulaText.innerText = `Menggunakan rumus standar termodinamika.`;
+                return;
+            }
+
+            // Logika Multiplier Standar
+            const rate1 = data.units[name1];
+            const rate2 = data.units[name2];
+
+            if (sourceBox === 1) {
+                const baseValue = val1 * rate1;
+                const result = baseValue / rate2;
+                out2.value = formatNumber(result);
+            } else {
+                const baseValue = val2 * rate2;
+                const result = baseValue / rate1;
+                out1.value = formatNumber(result);
+            }
+
+            // Display Formula
+            formulaText.innerText = `1 ${name1.split(' ')[0]} = ${formatNumber(rate1 / rate2)} ${name2.split(' ')[0]}`;
+        }
+
+        // Helper menghilangkan koma berlebihan (misal: 0.1000000000001 -> 0.1)
+        function formatNumber(num) {
+            if(num === 0) return 0;
+            return parseFloat(num.toPrecision(12)); 
+        }
+
+        // --- EXPORT PDF & WORD ---
+        async function exportReport(format) {
+            const btnPdf = document.getElementById('btnExportPdf');
+            const btnWord = document.getElementById('btnExportWord');
+            btnPdf.disabled = true; btnWord.disabled = true;
+
+            const catTitle = document.getElementById('activeCategoryTitle').innerText;
+            const val1 = document.getElementById('val1').value;
+            const u1 = document.getElementById('unit1').value;
+            const val2 = document.getElementById('val2').value;
+            const u2 = document.getElementById('unit2').value;
+            const formula = document.getElementById('formulaText').innerText;
+
+            const tableData = [
+                ['Category', catTitle],
+                ['Input Value', `${val1} ${u1}`],
+                ['Converted Result', `${val2} ${u2}`],
+                ['Conversion Ratio', formula]
+            ];
+
+            let finalBlob, finalFileName;
+
+            try {
+                if (format === 'pdf') {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF('p', 'mm', 'a4'); 
+                    doc.setFont("courier", "bold").setFontSize(20);
+                    doc.text("UNIT CONVERSION RECEIPT", 105, 20, { align: "center" });
+                    doc.setFontSize(11).setFont("courier", "normal");
+                    doc.text(`Date : ${new Date().toLocaleString()}`, 14, 35);
+
+                    doc.autoTable({
+                        startY: 45, head: [['Parameter', 'Detail']],
+                        body: tableData, theme: 'grid',
+                        styles: { font: 'courier', fontSize: 10, cellPadding: 5 },
+                        headStyles: { fillColor:[37, 99, 235] }
+                    });
+
+                    finalBlob = doc.output('blob');
+                    finalFileName = `Conversion_${catTitle.replace(/\s/g,'_')}.pdf`;
+
+                } else if (format === 'word') {
+                    if (typeof window.docx === 'undefined') throw new Error("Library docx not ready yet.");
+
+                    const tableRows =[
+                        new window.docx.TableRow({ tableHeader: true, children:[
+                            new window.docx.TableCell({ children:[new window.docx.Paragraph({text: "Parameter", bold: true})], shading: { fill: "2563eb" } }),
+                            new window.docx.TableCell({ children:[new window.docx.Paragraph({text: "Detail", bold: true})], shading: { fill: "2563eb" } })
+                        ]}),
+                        ...tableData.map(row => new window.docx.TableRow({
+                            children:[
+                                new window.docx.TableCell({ children:[new window.docx.Paragraph(row[0])] }),
+                                new window.docx.TableCell({ children:[new window.docx.Paragraph(row[1])] })
+                            ]
+                        }))
+                    ];
+
+                    const docWord = new window.docx.Document({
+                        sections:[{
+                            children:[
+                                new window.docx.Paragraph({ children:[new window.docx.TextRun({ text: "UNIT CONVERSION RECEIPT", bold: true, size: 28 })], alignment: window.docx.AlignmentType.CENTER, spacing: { after: 400 } }),
+                                new window.docx.Paragraph({ text: `Date : ${new Date().toLocaleString()}`, spacing: { after: 400 } }),
+                                new window.docx.Table({ width: { size: 100, type: window.docx.WidthType.PERCENTAGE }, rows: tableRows })
+                            ]
+                        }]
+                    });
+
+                    finalBlob = await window.docx.Packer.toBlob(docWord);
+                    finalFileName = `Conversion_${catTitle.replace(/\s/g,'_')}.docx`;
+                }
+
+                if (typeof addToHistory === 'function') {
+                    const historyId = await addToHistory('Converter', finalFileName, finalBlob);
+                    window.location.href = `../go.html?id=${historyId}`;
+                } else {
+                    saveFile(URL.createObjectURL(finalBlob), finalFileName);
+                }
+
+            } catch(e) {
+                alert("Export failed");
+            } finally {
+                btnPdf.disabled = false; btnWord.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>

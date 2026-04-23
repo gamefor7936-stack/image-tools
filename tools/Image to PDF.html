@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Image to PDF - MARK_Tools</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232563eb'/%3E%3Cpath d='M4 19V5l8 8 8-8v14' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="../js/history.js"></script>
+</head>
+<body class="bg-gray-50 p-6">
+<div class="max-w-xl mx-auto">
+<a class="text-sm text-blue-500 mb-4 inline-block" href="/">← Back to home</a>
+<div class="bg-white p-6 rounded-xl shadow-md border border-gray-100 text-center">
+<h3 class="text-xl font-bold mb-2">Image to PDF</h3>
+<p class="text-gray-500 text-xs mb-4 text-left">Add images in order; each image becomes one PDF page (scaled to fit A4).</p>
+<label class="flex flex-col items-center justify-center w-full h-32 border-2 border-purple-300 border-dashed rounded-lg cursor-pointer bg-purple-50 hover:bg-purple-100 transition" for="imgPdfInput">
+<p class="text-sm text-purple-700 font-bold">Click to add images</p>
+<p class="text-xs text-purple-500">PNG, JPG, WebP, and more</p>
+<input accept="image/*" class="hidden" id="imgPdfInput" multiple="" onchange="handleImagePdfFiles(this)" type="file"/>
+</label>
+<div class="mt-4 space-y-2 text-left" id="fileQueue"></div>
+<button class="w-full bg-purple-600 text-white py-2.5 rounded-lg font-bold mt-4 disabled:bg-gray-400" id="buildBtn" onclick="buildPdfFromImages()">
+                Build PDF (<span id="fileCount">0</span> images)
+            </button>
+</div>
+<section class="mt-12">
+<div class="flex items-center gap-2 mb-4 px-4">
+<svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<h3 class="font-bold text-slate-700">Recent history</h3>
+</div>
+<div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm" id="historyList">
+</div>
+</section>
+<script>
+        let selectedImages = [];
+
+        function handleImagePdfFiles(input) {
+            const files = Array.from(input.files);
+            files.forEach(file => selectedImages.push(file));
+            input.value = "";
+            renderQueue();
+        }
+
+        function renderQueue() {
+            const queueDiv = document.getElementById('fileQueue');
+            const countSpan = document.getElementById('fileCount');
+            queueDiv.innerHTML = "";
+            countSpan.innerText = selectedImages.length;
+            selectedImages.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = "flex justify-between bg-gray-100 p-2 text-xs rounded";
+                item.innerHTML = `<span class="truncate">${file.name}</span><button onclick="removeFromQueue(${index})" class="text-red-500 font-bold shrink-0">Remove</button>`;
+                queueDiv.appendChild(item);
+            });
+        }
+
+        function removeFromQueue(index) {
+            selectedImages.splice(index, 1);
+            renderQueue();
+        }
+
+        async function buildPdfFromImages() {
+            if (selectedImages.length === 0) return alert("Add at least one image.");
+            const btn = document.getElementById('buildBtn');
+            btn.disabled = true;
+            btn.innerText = "Building PDF…";
+            try {
+                const pdfDoc = await PDFLib.PDFDocument.create();
+                const a4w = 595.28;
+                const a4h = 841.89;
+                const margin = 36;
+
+                for (const file of selectedImages) {
+                    const bytes = await file.arrayBuffer();
+                    let image;
+                    const type = file.type.toLowerCase();
+                    if (type === 'image/png') {
+                        image = await pdfDoc.embedPng(bytes);
+                    } else if (type === 'image/jpeg' || type === 'image/jpg') {
+                        image = await pdfDoc.embedJpg(bytes);
+                    } else {
+                        const bmp = await createImageBitmap(file);
+                        const canvas = document.createElement('canvas');
+                        canvas.width = bmp.width;
+                        canvas.height = bmp.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(bmp, 0, 0);
+                        const pngBlob = await new Promise((resolve, reject) => {
+                            canvas.toBlob(b => (b ? resolve(b) : reject(new Error('toBlob failed'))), 'image/png');
+                        });
+                        const pngBytes = await pngBlob.arrayBuffer();
+                        image = await pdfDoc.embedPng(pngBytes);
+                    }
+
+                    const page = pdfDoc.addPage([a4w, a4h]);
+                    const maxW = a4w - 2 * margin;
+                    const maxH = a4h - 2 * margin;
+                    const iw = image.width;
+                    const ih = image.height;
+                    const scale = Math.min(maxW / iw, maxH / ih);
+                    const dw = iw * scale;
+                    const dh = ih * scale;
+                    const x = (a4w - dw) / 2;
+                    const y = (a4h - dh) / 2;
+                    page.drawImage(image, { x, y, width: dw, height: dh });
+                }
+
+                const bytes = await pdfDoc.save();
+                const blob = new Blob([bytes]);
+                const name = "images.pdf";
+                if (typeof addToHistory === 'function') {
+                    const historyId = await addToHistory('Image to PDF', name, blob);
+                    window.location.href = `../go.html?id=${historyId}`;
+                } else {
+                    saveFile(URL.createObjectURL(blob), name);
+                }
+                selectedImages = [];
+                renderQueue();
+                alert("PDF created successfully.");
+            } catch (e) {
+                console.error(e);
+                alert("Could not build the PDF. Try PNG or JPG images.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `Build PDF (<span id="fileCount">${selectedImages.length}</span> images)`;
+            }
+        }
+
+        window.onload = () => {
+            renderHistoryUI('Image to PDF');
+        };
+    </script>
+<script src="../js/main.js"></script></body>
+</html>

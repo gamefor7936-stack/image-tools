@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>YT Thumbnail Downloader - MARK_Tools</title>
+<meta name="description" content="Free YouTube Thumbnail Downloader. Quickly fetch and save high-resolution (HD) cover images from any YouTube video URL.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232563eb'/%3E%3Cpath d='M4 19V5l8 8 8-8v14' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../js/history.js"></script>
+</head>
+<body class="bg-gray-50 p-6">
+<div class="max-w-xl mx-auto">
+<a class="text-blue-500 text-sm mb-4 inline-block" href="/">← Back to home</a>
+<div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+<div class="mb-4 text-red-600">
+<svg class="h-10 w-10" fill="none" stroke="currentColor font-bold" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<h3 class="text-xl font-semibold mb-2">YT Thumbnail Downloader</h3>
+<input class="w-full p-2 border rounded text-sm mb-4" id="ytUrl" placeholder="Paste a YouTube video URL" type="text"/>
+<div class="hidden mb-4" id="ytPreview">
+<img class="rounded-lg shadow-sm mb-2 w-full" id="thumbImg" src=""/>
+<button class="w-full bg-red-600 text-white py-2 rounded-lg font-bold" onclick="downloadThumb()">Download HD image</button>
+</div>
+<button class="w-full bg-gray-800 text-white py-2 rounded-lg font-bold" id="getThumbBtn" onclick="getYoutubeThumb()">Fetch thumbnail</button>
+</div>
+<section class="mt-12">
+<div class="flex items-center gap-2 mb-4 px-4">
+<svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<h3 class="font-bold text-slate-700">Recent history</h3>
+</div>
+<div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm" id="historyList">
+</div>
+</section>
+</div>
+<script>
+        function getYoutubeThumb() {
+            const url = document.getElementById('ytUrl').value;
+            const preview = document.getElementById('ytPreview');
+            const img = document.getElementById('thumbImg');
+            const btn = document.getElementById('getThumbBtn');
+
+            const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+
+            if (match && match[2].length == 11) {
+                const videoId = match[2];
+                const thumbUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+                
+                img.src = thumbUrl;
+                preview.classList.remove('hidden');
+                btn.innerText = "Load another";
+            } else {
+                alert("Invalid YouTube URL. Example: https://www.youtube.com/watch?v=VIDEO_ID");
+                preview.classList.add('hidden');
+            }
+        }
+
+        async function downloadThumb() {
+            const imgSrc = document.getElementById('thumbImg').src;
+            try {
+                const res = await fetch(imgSrc);
+                const blob = await res.blob();
+                if (typeof addToHistory === 'function') {
+                    const historyId = await addToHistory('YT Thumbnail Downloader', 'YT_Thumbnail_HD.jpg', blob);
+                    window.location.href = `../go.html?id=${historyId}`;
+                } else {
+                    saveFile(URL.createObjectURL(blob), "YT_Thumbnail_HD.jpg");
+                }
+            } catch (error) {
+                console.error('Error downloading thumbnail:', error);
+            }
+        }
+
+        window.onload = () => {
+            renderHistoryUI('YT Thumbnail Downloader');
+        };
+    </script>
+<script src="../js/main.js"></script></body>
+</html>

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>JSON FORMATTER - MARK_Tools</title>
+<meta name="description" content="Free online JSON Formatter and Minifier. Pretty-print messy JSON code for easy reading, or compress it to save space.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232563eb'/%3E%3Cpath d='M4 19V5l8 8 8-8v14' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../js/history.js"></script>
+</head>
+<body class="bg-gray-50 p-6">
+<div class="max-w-xl mx-auto">
+<a class="text-blue-500 text-sm mb-4 inline-block" href="/">← Back to home</a>
+<div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+<div class="mb-4 text-green-600 font-mono font-bold text-2xl">{ }</div>
+<h3 class="text-xl font-semibold mb-2">JSON Formatter</h3>
+<textarea class="w-full p-2 border rounded text-xs font-mono mb-2" id="jsonInput" placeholder="Paste minified or messy JSON here…" rows="4"></textarea>
+<div class="grid grid-cols-2 gap-2">
+<button class="bg-green-600 text-white py-2 rounded font-bold text-xs" onclick="formatJSON()">Pretty-print</button>
+<button class="bg-gray-700 text-white py-2 rounded font-bold text-xs" onclick="minifyJSON()">Minify</button>
+</div>
+</div>
+<section class="mt-12">
+<div class="flex items-center gap-2 mb-4 px-4">
+<svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<h3 class="font-bold text-slate-700">Recent history</h3>
+</div>
+<div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm" id="historyList">
+</div>
+</section>
+</div>
+<script>
+        function formatJSON() {
+            const input = document.getElementById('jsonInput');
+            try {
+                const obj = JSON.parse(input.value);
+                input.value = JSON.stringify(obj, null, 4);
+            } catch (e) {
+                alert("Invalid JSON: " + e.message);
+            }
+        }
+
+        function minifyJSON() {
+            const input = document.getElementById('jsonInput');
+            try {
+                const obj = JSON.parse(input.value);
+                input.value = JSON.stringify(obj);
+            } catch (e) {
+                alert("Invalid JSON.");
+            }
+        }
+
+        window.onload = () => {
+            renderHistoryUI('JSON Formatter');
+        };
+    </script>
+<script src="../js/main.js"></script></body>
+</html>

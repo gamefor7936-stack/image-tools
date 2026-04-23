@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS Gradient Generator - MARK_Tools</title>
+    <meta name="description" content="Visual CSS Gradient Generator. Create beautiful linear or radial background gradients and copy the CSS code instantly for your web design projects.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232563eb'/%3E%3Cpath d='M4 19V5l8 8 8-8v14' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/history.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700&display=swap');
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .font-sans { font-family: 'Inter', sans-serif; }
+        .glass-dark { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+        .term-input { background: #0f172a; border: 1px solid #334155; color: #a855f7; font-family: 'JetBrains Mono', monospace; outline: none; }
+    </style>
+</head>
+<body class="bg-[#0b1120] text-slate-300 font-sans min-h-screen flex flex-col">
+
+    <nav class="bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-800">
+        <div class="container mx-auto px-6 h-16 flex justify-between items-center">
+            <a href="/" class="text-purple-500 font-black text-xl tracking-tighter">MARK_Tools | Dev Suite</a>
+            <a href="/" class="text-xs font-bold text-slate-400 hover:text-purple-400">BACK TO HOME</a>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8 flex-grow flex flex-col lg:flex-row gap-6">
+        
+        <!-- KOLOM KIRI: CONTROLS -->
+        <div class="w-full lg:w-1/3 flex flex-col gap-6">
+            <div class="glass-dark p-6 rounded-3xl border-t-4 border-t-purple-500">
+                <h1 class="text-2xl font-bold text-white mb-2">CSS Gradient</h1>
+                <p class="text-[10px] text-slate-400 uppercase tracking-widest mb-6">Visual Builder</p>
+
+                <div class="space-y-4">
+                    <!-- Colors -->
+                    <div class="flex gap-4">
+                        <div class="w-1/2">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Color 1</label>
+                            <input type="color" id="color1" value="#3b82f6" class="w-full h-12 rounded cursor-pointer border-none bg-transparent" oninput="updateGradient()">
+                        </div>
+                        <div class="w-1/2">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Color 2</label>
+                            <input type="color" id="color2" value="#8b5cf6" class="w-full h-12 rounded cursor-pointer border-none bg-transparent" oninput="updateGradient()">
+                        </div>
+                    </div>
+
+                    <!-- Type -->
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Gradient Type</label>
+                        <select id="gradType" class="w-full p-3 rounded-lg term-input text-sm" onchange="updateGradient()">
+                            <option value="linear">Linear</option>
+                            <option value="radial">Radial</option>
+                        </select>
+                    </div>
+
+                    <!-- Direction/Angle -->
+                    <div id="directionControl">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Angle: <span id="angleVal">135</span>°</label>
+                        <input type="range" id="gradAngle" min="0" max="360" value="135" class="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-purple-500" oninput="updateGradient()">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Randomizer & Export -->
+            <button onclick="randomizeGradient()" class="w-full bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-bold text-sm tracking-widest transition">
+                🎲 Randomize
+            </button>
+            <div class="glass-dark p-4 rounded-xl">
+                <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Histori Palet</h4>
+                <div id="historyList" class="space-y-2 max-h-40 overflow-y-auto pr-1"></div>
+            </div>
+        </div>
+
+        <!-- KOLOM KANAN: PREVIEW & CODE -->
+        <div class="w-full lg:w-2/3 glass-dark rounded-3xl p-6 md:p-10 flex flex-col">
+            
+            <!-- PREVIEW BOX -->
+            <div id="gradientPreview" class="w-full h-64 md:h-80 rounded-2xl shadow-2xl mb-8 border-4 border-slate-800 transition-all duration-300"></div>
+
+            <!-- CSS CODE -->
+            <div class="bg-[#020617] p-4 rounded-xl border border-slate-800 relative group">
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">CSS Code</p>
+                <code id="cssCode" class="text-purple-400 text-sm font-mono break-all block p-2">background: linear-gradient(135deg, #3b82f6, #8b5cf6);</code>
+                <button onclick="copyCSS()" class="absolute top-4 right-4 bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg text-xs font-bold transition opacity-0 group-hover:opacity-100">
+                    COPY CSS
+                </button>
+            </div>
+
+            <!-- Redirect Simulation -->
+            <button onclick="saveAndRedirect()" class="mt-8 w-full bg-purple-600 hover:bg-purple-500 text-white py-4 rounded-xl font-black uppercase tracking-widest transition shadow-lg shadow-purple-900/50">
+                Save to History & Continue
+            </button>
+        </div>
+    </main>
+
+    <script>
+        window.onload = () => { updateGradient(); if(typeof renderHistoryUI === 'function') renderHistoryUI('CSS Gradient'); };
+
+        function updateGradient() {
+            const c1 = document.getElementById('color1').value;
+            const c2 = document.getElementById('color2').value;
+            const type = document.getElementById('gradType').value;
+            const angle = document.getElementById('gradAngle').value;
+            
+            document.getElementById('angleVal').innerText = angle;
+            document.getElementById('directionControl').style.display = type === 'linear' ? 'block' : 'none';
+
+            let cssValue = "";
+            if (type === 'linear') {
+                cssValue = `linear-gradient(${angle}deg, ${c1}, ${c2})`;
+            } else {
+                cssValue = `radial-gradient(circle, ${c1}, ${c2})`;
+            }
+
+            document.getElementById('gradientPreview').style.background = cssValue;
+            document.getElementById('cssCode').innerText = `background: ${cssValue};`;
+        }
+
+        function randomizeGradient() {
+            const randomColor = () => '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+            document.getElementById('color1').value = randomColor();
+            document.getElementById('color2').value = randomColor();
+            document.getElementById('gradAngle').value = Math.floor(Math.random() * 360);
+            updateGradient();
+        }
+
+        function copyCSS() {
+            const code = document.getElementById('cssCode').innerText;
+            navigator.clipboard.writeText(code);
+            alert("CSS Copied to clipboard!");
+        }
+
+        async function saveAndRedirect() {
+            const code = document.getElementById('cssCode').innerText;
+            const blob = new Blob([code], { type: 'text/plain' });
+            const fileName = `Gradient_${Date.now()}.txt`;
+            
+            if (typeof addToHistory === 'function') {
+                const historyId = await addToHistory('CSS Gradient', fileName, blob);
+                window.location.href = `../go.html?id=${historyId}`;
+            } else {
+                saveFile(URL.createObjectURL(blob), fileName);
+            }
+        }
+    </script>
+</body>
+</html>

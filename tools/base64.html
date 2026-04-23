@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Base64 Converter - MARK_Tools</title>
+    <meta name="description" content="Easily encode text or images to Base64 format, or decode Base64 strings back to readable text. Fast client-side developer tool.">
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232563eb'/%3E%3Cpath d='M4 19V5l8 8 8-8v14' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/history.js"></script>
+
+</head>
+
+<body class="bg-gray-50 p-6">
+    <div class="max-w-xl mx-auto">
+        <a class="text-blue-500 text-sm mb-4 inline-block" href="/">← Back to home</a>
+        <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+            <div class="mb-4 text-blue-500 font-bold text-2xl font-mono">B64</div>
+            <h3 class="text-xl font-semibold mb-2">Base64 Converter</h3>
+            <div class="space-y-3">
+                <textarea class="w-full p-2 border rounded text-xs font-mono" id="b64Input"
+                    placeholder="Type text or paste Base64…" rows="3"></textarea>
+                <div class="grid grid-cols-2 gap-2">
+                    <button class="bg-blue-600 text-white py-2 rounded text-[10px] font-bold" onclick="encodeB64()">Text
+                        → Base64</button>
+                    <button class="bg-gray-700 text-white py-2 rounded text-[10px] font-bold"
+                        onclick="decodeB64()">Base64 → text</button>
+                </div>
+                <div class="border-t pt-3 mt-3">
+                    <label class="block text-[10px] font-bold text-gray-400 mb-1">Or encode an image file</label>
+                    <input accept="image/*" class="block w-full text-[10px]" id="b64File" onchange="imageToBase64()"
+                        type="file" />
+                </div>
+            </div>
+        </div>
+        <section class="mt-12">
+            <div class="flex items-center gap-2 mb-4 px-4">
+                <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"
+                        stroke-width="2"></path>
+                </svg>
+                <h3 class="font-bold text-slate-700">Recent history</h3>
+            </div>
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm" id="historyList">
+            </div>
+        </section>
+    </div>
+    <script>
+        function encodeB64() {
+            const input = document.getElementById('b64Input');
+            try {
+                input.value = btoa(unescape(encodeURIComponent(input.value)));
+            } catch (e) {
+                alert("Encoding failed. Check that the text is valid.");
+            }
+        }
+
+        function decodeB64() {
+            const input = document.getElementById('b64Input');
+            try {
+                input.value = decodeURIComponent(escape(atob(input.value)));
+            } catch (e) {
+                alert("Invalid Base64 string.");
+            }
+        }
+
+        function imageToBase64() {
+            const file = document.getElementById('b64File').files[0];
+            const output = document.getElementById('b64Input');
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                output.value = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        window.onload = () => {
+            renderHistoryUI('Base64 Converter');
+        };
+    </script>
+</body>
+
+</html>

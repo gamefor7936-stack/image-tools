@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Palette Extractor - MARK_Tools</title>
+    <meta name="description" content="Extract the dominant color palette from any image automatically. Perfect tool for graphic designers and web developers to find color harmony.">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232563eb'/%3E%3Cpath d='M4 19V5l8 8 8-8v14' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/history.js"></script>
+    <!-- ColorThief Library untuk Ekstrak Warna -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700&display=swap');
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .font-sans { font-family: 'Inter', sans-serif; }
+        .glass-dark { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+        
+        .color-box { transition: all 0.3s; cursor: pointer; }
+        .color-box:hover { transform: scale(1.05); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); }
+    </style>
+</head>
+<body class="bg-[#0b1120] text-slate-300 font-sans min-h-screen flex flex-col">
+
+    <nav class="bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-800">
+        <div class="container mx-auto px-6 h-16 flex justify-between items-center">
+            <a href="/" class="text-rose-500 font-black text-xl tracking-tighter">MARK_Tools | Design</a>
+            <a href="/" class="text-xs font-bold text-slate-400 hover:text-rose-400">BACK TO HOME</a>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-12 flex-grow flex flex-col lg:flex-row gap-6">
+        
+        <!-- KIRI: UPLOAD -->
+        <div class="w-full lg:w-1/3 flex flex-col gap-6">
+            <div class="glass-dark p-6 rounded-3xl border-t-4 border-t-rose-500">
+                <div class="text-center mb-6">
+                    <h1 class="text-2xl font-bold text-white">Palette Generator</h1>
+                    <p class="text-xs text-slate-400 mt-1">Ekstrak Warna Dominan dari Gambar</p>
+                </div>
+
+                <label for="imgInput" class="w-full h-48 border-2 border-dashed border-slate-600 rounded-2xl flex flex-col items-center justify-center cursor-pointer hover:bg-slate-800/50 hover:border-rose-500 transition-all">
+                    <span class="text-4xl mb-2">📸</span>
+                    <span class="text-sm font-bold text-slate-400">Upload Image</span>
+                    <input type="file" id="imgInput" class="hidden" accept="image/*" onchange="processImage(this)">
+                </label>
+            </div>
+            
+            <div class="glass-dark p-4 rounded-xl">
+                <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Histori Palet</h4>
+                <div id="historyList" class="space-y-2 max-h-40 overflow-y-auto pr-1"></div>
+            </div>
+        </div>
+
+        <!-- KANAN: HASIL PREVIEW & WARNA -->
+        <div class="w-full lg:w-2/3 glass-dark rounded-3xl p-6 md:p-10 flex flex-col items-center">
+            
+            <div id="emptyState" class="h-full flex flex-col items-center justify-center opacity-30">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <p class="font-mono text-sm">Menunggu Gambar...</p>
+            </div>
+
+            <div id="resultArea" class="hidden w-full flex flex-col items-center">
+                <!-- Gambar Preview -->
+                <img id="sourceImage" class="max-h-[300px] rounded-xl shadow-2xl mb-8 object-contain bg-black" crossorigin="anonymous">
+
+                <!-- Palette Colors -->
+                <div class="w-full">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 text-center">Klik warna untuk copy HEX Code</p>
+                    <div id="paletteContainer" class="flex flex-wrap justify-center gap-4">
+                        <!-- Warna akan di-generate via JS -->
+                    </div>
+                </div>
+
+                <button onclick="saveAndRedirect()" class="mt-12 w-full max-w-sm bg-rose-600 hover:bg-rose-500 text-white py-3 rounded-xl font-black uppercase tracking-widest transition shadow-lg shadow-rose-900/50">
+                    Export Palette to TXT
+                </button>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        window.onload = () => { if(typeof renderHistoryUI === 'function') renderHistoryUI('Color Palette'); };
+        
+        let currentPalette =[];
+
+        function processImage(input) {
+            if (!input.files[0]) return;
+            const img = document.getElementById('sourceImage');
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                img.src = e.target.result;
+                document.getElementById('emptyState').classList.add('hidden');
+                document.getElementById('resultArea').classList.remove('hidden');
+                
+                img.onload = () => extractColors(img);
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+
+        function extractColors(imgElement) {
+            const colorThief = new ColorThief();
+            
+            // Ambil 5 warna dominan
+            const palette = colorThief.getPalette(imgElement, 5);
+            currentPalette =[];
+
+            const container = document.getElementById('paletteContainer');
+            container.innerHTML = "";
+
+            palette.forEach(rgb => {
+                const hex = rgbToHex(rgb[0], rgb[1], rgb[2]);
+                currentPalette.push(hex);
+
+                const div = document.createElement('div');
+                div.className = "color-box flex flex-col items-center gap-2";
+                div.innerHTML = `
+                    <div class="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 border-slate-800 shadow-lg" style="background-color: ${hex}" onclick="copyColor('${hex}')"></div>
+                    <span class="font-mono text-xs text-slate-300 font-bold">${hex}</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function rgbToHex(r, g, b) {
+            return "#" + (1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1).toUpperCase();
+        }
+
+        function copyColor(hex) {
+            navigator.clipboard.writeText(hex);
+            alert(`Copied: ${hex}`);
+        }
+
+        async function saveAndRedirect() {
+            if (currentPalette.length === 0) return;
+            
+            const textContent = `Dominant Colors Extracted:\n\n${currentPalette.join('\n')}`;
+            const blob = new Blob([textContent], { type: 'text/plain' });
+            const fileName = `Color_Palette_${Date.now()}.txt`;
+            
+            if (typeof addToHistory === 'function') {
+                const historyId = await addToHistory('Color Palette', fileName, blob);
+                window.location.href = `../go.html?id=${historyId}`;
+            } else {
+                saveFile(URL.createObjectURL(blob), fileName);
+            }
+        }
+    </script>
+</body>
+</html>

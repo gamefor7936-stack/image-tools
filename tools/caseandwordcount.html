@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>CASE CONVERTER &amp; WORD COUNT - MARK_Tools</title>
+<meta name="description" content="Free word counter and character calculator. Instantly convert text to UPPERCASE, lowercase, or Title Case. Perfect for writers and editors.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232563eb'/%3E%3Cpath d='M4 19V5l8 8 8-8v14' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="../js/history.js"></script>
+</head>
+<body class="bg-gray-50 p-6">
+<div class="max-w-xl mx-auto">
+<a class="text-blue-500 text-sm mb-4 inline-block" href="/">← Back to home</a>
+<div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+<div class="mb-4 text-pink-500">
+<svg class="h-10 w-10" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<h3 class="text-xl font-semibold mb-2">Case Converter</h3>
+<textarea class="w-full p-2 border rounded text-sm mb-2" id="textContent" oninput="countText()" placeholder="Type or paste text here…" rows="3"></textarea>
+<div class="flex justify-between text-[10px] text-gray-500 mb-3">
+<span>Words: <b id="wordCount">0</b></span>
+<span>Characters: <b id="charCount">0</b></span>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<button class="bg-gray-200 p-1 rounded text-[10px] font-bold" onclick="convertCase('upper')">UPPERCASE</button>
+<button class="bg-gray-200 p-1 rounded text-[10px] font-bold" onclick="convertCase('lower')">lowercase</button>
+</div>
+</div>
+<section class="mt-12">
+<div class="flex items-center gap-2 mb-4 px-4">
+<svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<h3 class="font-bold text-slate-700">Recent history</h3>
+</div>
+<div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm" id="historyList">
+</div>
+</section>
+</div>
+<script>
+        function countText() {
+            const text = document.getElementById('textContent').value;
+            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+            document.getElementById('wordCount').innerText = words;
+            document.getElementById('charCount').innerText = text.length;
+        }
+
+        function convertCase(type) {
+            const area = document.getElementById('textContent');
+            if (type === 'upper') area.value = area.value.toUpperCase();
+            if (type === 'lower') area.value = area.value.toLowerCase();
+            countText();
+        }
+
+        window.onload = () => {
+            renderHistoryUI('Case Converter');
+        };
+    </script>
+<script src="../js/main.js"></script></body>
+</html>

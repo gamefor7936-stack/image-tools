@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Image Converter - MARK_Tools</title>
+<meta name="description" content="Bulk convert images between JPG, PNG, and WebP formats instantly. A free, lightning-fast image converter running safely on your browser.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232563eb'/%3E%3Cpath d='M4 19V5l8 8 8-8v14' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="../js/main.js"></script>
+<script src="../js/history.js"></script>
+
+</head>
+<body class="bg-gray-50 p-6">
+<div class="max-w-xl mx-auto">
+<a class="text-blue-500 text-sm mb-4 inline-block" href="/">← Back to home</a>
+<div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+<div class="mb-4 text-orange-500">
+<svg class="h-10 w-10" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<h3 class="text-xl font-semibold mb-2 text-gray-800">Bulk Image Converter</h3>
+<div class="mb-4">
+<label class="flex flex-col items-center justify-center w-full h-32 border-2 border-orange-300 border-dashed rounded-lg cursor-pointer bg-orange-50 hover:bg-orange-100 transition" for="imageConvertInput">
+<div class="flex flex-col items-center justify-center pt-5 pb-6">
+<p class="mb-1 text-sm text-orange-700 font-bold">Add images</p>
+<p class="text-[10px] text-orange-500 text-center px-4 italic text-balance">Select one or many files at once</p>
+</div>
+<input accept="image/*" class="hidden" id="imageConvertInput" multiple="" onchange="handleImageConvertFiles(this)" type="file"/>
+</label>
+</div>
+<div class="mb-4">
+<label class="block text-xs font-bold text-gray-600 mb-1 uppercase">Convert all to</label>
+<select class="w-full p-2.5 bg-white border border-gray-300 text-sm rounded-lg focus:ring-orange-500" id="targetFormat">
+<option value="image/png">PNG (.png)</option>
+<option value="image/jpeg">JPG (.jpg)</option>
+<option value="image/webp">WebP (.webp)</option>
+</select>
+</div>
+<div class="space-y-2 mb-4 max-h-40 overflow-y-auto" id="imageQueue">
+</div>
+<button class="w-full bg-orange-500 text-white py-2.5 rounded-lg font-bold hover:bg-orange-600 shadow-md disabled:bg-gray-400 transition-all" id="convertBtn" onclick="convertBulkImages()">
+                Convert &amp; download (<span id="imageCount">0</span>)
+            </button>
+</div>
+<section class="mt-12">
+<div class="flex items-center gap-2 mb-4 px-4">
+<svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<h3 class="font-bold text-slate-700">Recent history</h3>
+</div>
+<div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm" id="historyList">
+</div>
+</section>
+</div>
+<script>
+        let selectedImages = [];
+
+        function handleImageConvertFiles(input) {
+            const files = Array.from(input.files);
+            files.forEach(file => selectedImages.push(file));
+            input.value = "";
+            renderImageQueue();
+        }
+
+        function renderImageQueue() {
+            const queueDiv = document.getElementById('imageQueue');
+            const countSpan = document.getElementById('imageCount');
+            if (!queueDiv) return;
+
+            queueDiv.innerHTML = "";
+            if (countSpan) countSpan.innerText = selectedImages.length;
+
+            selectedImages.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = "flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-200 text-[10px]";
+                item.innerHTML = `
+                    <span class="truncate w-32 font-medium text-gray-700 text-balance uppercase text-[9px]">${index + 1}. ${file.name}</span>
+                    <button onclick="removeImageFromQueue(${index})" class="text-red-500 hover:text-red-700 font-bold">Remove</button>
+                `;
+                queueDiv.appendChild(item);
+            });
+        }
+
+        function removeImageFromQueue(index) {
+            selectedImages.splice(index, 1);
+            renderImageQueue();
+        }
+
+        function processSingleImage(file, format) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                const url = URL.createObjectURL(file);
+                img.src = url;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    canvas.toBlob((blob) => {
+                        URL.revokeObjectURL(url);
+                        resolve(blob);
+                    }, format, 0.9);
+                };
+                img.onerror = reject;
+            });
+        }
+
+        async function convertBulkImages() {
+            const btn = document.getElementById('convertBtn');
+            const targetFormat = document.getElementById('targetFormat').value;
+            const extension = targetFormat.split('/')[1];
+
+            if (selectedImages.length === 0) return alert("Add at least one image.");
+
+            btn.disabled = true;
+            btn.innerText = "Processing…";
+
+            try {
+                const zip = new JSZip();
+
+                for (let i = 0; i < selectedImages.length; i++) {
+                    const file = selectedImages[i];
+                    const convertedBlob = await processSingleImage(file, targetFormat);
+                    
+                    const newName = file.name.substring(0, file.name.lastIndexOf('.')) || `image_${i+1}`;
+                    
+                    if (selectedImages.length === 1) {
+                        const fileName = `${newName}.${extension}`;
+                        if (typeof addToHistory === 'function') {
+                            const historyId = await addToHistory('Bulk Image Converter', fileName, convertedBlob);
+                            window.location.href = `../go.html?id=${historyId}`;
+                        } else {
+                            saveFile(URL.createObjectURL(convertedBlob), fileName);
+                        }
+                    } else {
+                        zip.file(`${newName}.${extension}`, convertedBlob);
+                    }
+                }
+
+                if (selectedImages.length > 1) {
+                    const zipContent = await zip.generateAsync({ type: "blob" });
+                    const fileName = `Converted_Images.zip`;
+                    if (typeof addToHistory === 'function') {
+                        const historyId = await addToHistory('Bulk Image Converter', fileName, zipContent);
+                        window.location.href = `../go.html?id=${historyId}`;
+                    } else {
+                        saveFile(URL.createObjectURL(zipContent), fileName);
+                    }
+                }
+
+                setTimeout(() => {
+                    selectedImages = [];
+                    renderImageQueue();
+                    alert("Conversion finished.");
+                    btn.disabled = false;
+                    btn.innerHTML = `Convert & download (<span id="imageCount">0</span>)`;
+                }, 500);
+
+            } catch (error) {
+                console.error(error);
+                alert("Could not convert the images.");
+                btn.disabled = false;
+                btn.innerHTML = `Convert & download (<span id="imageCount">${selectedImages.length}</span>)`;
+            }
+        }
+        window.onload = () => {
+            renderHistoryUI('Bulk Image Converter');
+        };
+    </script>
+</body>
+</html>

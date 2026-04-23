@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Merge PDF - MARK_Tools</title>
+<meta name="description" content="Securely merge and combine multiple PDF files into one document online for free. Processed locally in your browser with zero file uploads required.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232563eb'/%3E%3Cpath d='M4 19V5l8 8 8-8v14' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="../js/history.js"></script>
+</head>
+<body class="bg-gray-50 p-6">
+<div class="max-w-xl mx-auto">
+<a class="text-blue-500 text-sm mb-4 inline-block" href="/">← Back to home</a>
+<div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+<div class="mb-4 text-purple-500">
+<svg class="h-10 w-10" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<h3 class="text-xl font-semibold mb-2 text-gray-800">Merge PDF</h3>
+<p class="text-gray-500 text-xs mb-4">Add files one at a time or select several at once. Order is preserved.</p>
+<div class="mb-4">
+<label class="flex flex-col items-center justify-center w-full h-32 border-2 border-purple-300 border-dashed rounded-lg cursor-pointer bg-purple-50 hover:bg-purple-100 transition" for="mergeInput">
+<div class="flex flex-col items-center justify-center pt-5 pb-6">
+<p class="mb-2 text-sm text-purple-700 font-bold">Click to add PDF files</p>
+<p class="text-xs text-purple-500">You can add more files anytime</p>
+</div>
+<input accept="application/pdf" class="hidden" id="mergeInput" multiple="" onchange="handleMergeFiles(this)" type="file"/>
+</label>
+</div>
+<div class="space-y-2 mb-4 max-h-48 overflow-y-auto" id="fileQueue">
+</div>
+<button class="w-full bg-purple-600 text-white py-2.5 rounded-lg font-bold hover:bg-purple-700 shadow-lg disabled:bg-gray-400" id="mergeBtn" onclick="mergePDF()">
+                Merge PDFs (<span id="fileCount">0</span> files)
+            </button>
+</div>
+<section class="mt-12">
+<div class="flex items-center gap-2 mb-4 px-4">
+<svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<h3 class="font-bold text-slate-700">Recent history</h3>
+</div>
+<div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm" id="historyList">
+</div>
+</section>
+</div>
+<script>
+        let selectedFiles = [];
+
+        function handleMergeFiles(input) {
+            const files = Array.from(input.files);
+            
+            files.forEach(file => {
+                selectedFiles.push(file);
+            });
+
+            input.value = "";
+            
+            renderQueue();
+        }
+
+        function renderQueue() {
+            const queueDiv = document.getElementById('fileQueue');
+            const fileCountSpan = document.getElementById('fileCount');
+            
+            if (queueDiv) {
+                queueDiv.innerHTML = ""; 
+                selectedFiles.forEach((file, index) => {
+                    const item = document.createElement('div');
+                    item.className = "flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-200 text-[10px]";
+                    item.innerHTML = `
+                        <span class="truncate w-32 font-medium text-gray-700">${index + 1}. ${file.name}</span>
+                        <button onclick="removeFromQueue(${index})" class="text-red-500 hover:text-red-700 font-bold">Remove</button>
+                    `;
+                    queueDiv.appendChild(item);
+                });
+            }
+
+            if (fileCountSpan) {
+                fileCountSpan.innerText = selectedFiles.length;
+            }
+        }
+
+        function removeFromQueue(index) {
+            selectedFiles.splice(index, 1);
+            renderQueue();
+        }
+
+        async function mergePDF() {
+            const btn = document.getElementById('mergeBtn');
+            if (selectedFiles.length < 2) return alert("Select at least two PDF files.");
+
+            btn.disabled = true;
+            btn.innerText = "Merging…";
+
+            try {
+                const mergedPdf = await PDFLib.PDFDocument.create();
+                for (const file of selectedFiles) {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
+                    const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+                    copiedPages.forEach(page => mergedPdf.addPage(page));
+                }
+
+                const pdfBytes = await mergedPdf.save();
+                const blob = new Blob([pdfBytes]);
+                if (typeof addToHistory === 'function') {
+                    const historyId = await addToHistory('Merge PDF', 'Merged.pdf', blob);
+                    window.location.href = `../go.html?id=${historyId}`;
+                } else {
+                    saveFile(URL.createObjectURL(blob), "Merged.pdf");
+                }
+
+                selectedFiles = [];
+                
+                btn.innerHTML = `Merge PDFs (<span id="fileCount">0</span> files)`;
+                btn.disabled = false;
+
+                renderQueue();
+                alert("PDFs merged successfully.");
+
+            } catch (error) {
+                console.error(error);
+                alert("Could not merge the PDFs.");
+                btn.innerHTML = `Merge PDFs (<span id="fileCount">${selectedFiles.length}</span> files)`;
+                btn.disabled = false;
+            }
+        }
+
+        window.onload = () => {
+            renderHistoryUI('Merge PDF');
+        };
+    </script>
+<script src="../js/main.js"></script></body>
+</html>

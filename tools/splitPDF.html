@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Split PDF - MARK_Tools</title>
+<meta name="description" content="Extract pages or split your PDF into multiple files easily. Free, fast, and secure PDF splitter that works entirely offline in your browser.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%232563eb'/%3E%3Cpath d='M4 19V5l8 8 8-8v14' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="../js/history.js"></script>
+</head>
+<body class="bg-gray-50 p-6">
+<div class="max-w-xl mx-auto">
+<a class="text-blue-500 text-sm mb-4 inline-block" href="/">← Back to home</a>
+<div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+<div class="mb-4 text-red-500">
+<svg class="h-10 w-10" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758L5 19m0-14l4.121 4.121" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<h3 class="text-xl font-semibold mb-2 text-gray-800">Split PDF</h3>
+<p class="text-gray-500 text-xs mb-4">Split a PDF into multiple files in one go.</p>
+<div class="mb-4">
+<input accept="application/pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100 cursor-pointer" id="splitInput" type="file"/>
+</div>
+<div class="mb-4 space-y-2">
+<label class="block text-sm font-medium text-gray-700">Split mode</label>
+<select class="w-full p-2.5 bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block" id="splitMode" onchange="toggleSplitInput()">
+<option value="every">One page per PDF</option>
+<option value="fixed">Fixed number of pages per file</option>
+</select>
+<div class="mt-2 p-3 bg-red-50 rounded-lg border border-red-100" id="fixedPageInput" style="display: none;">
+<label class="text-xs font-bold text-red-800 block mb-1">Pages per file</label>
+<input class="w-full p-2 border border-red-200 rounded text-sm focus:outline-none focus:ring-2 focus:ring-red-400" id="pagesPerFile" min="1" type="number" value="2"/>
+<p class="text-[10px] text-red-600 mt-1 italic">Example: with 2, a 10-page PDF becomes five PDFs of 2 pages each.</p>
+</div>
+</div>
+<button class="w-full bg-red-600 text-white py-2.5 rounded-lg font-bold hover:bg-red-700 transition-colors shadow-sm" id="splitBtn" onclick="splitPDF()">
+                Split PDF
+            </button>
+<p class="text-xs text-center mt-3 text-red-600 font-medium hidden" id="splitProgress"></p>
+</div>
+<section class="mt-12">
+<div class="flex items-center gap-2 mb-4 px-4">
+<svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+<h3 class="font-bold text-slate-700">Recent history</h3>
+</div>
+<div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm" id="historyList">
+</div>
+</section>
+</div>
+<script>
+        async function splitPDF() {
+            const input = document.getElementById('splitInput');
+            const btn = document.getElementById('splitBtn');
+            const progressText = document.getElementById('splitProgress');
+            const mode = document.getElementById('splitMode').value;
+            const pagesPerFile = parseInt(document.getElementById('pagesPerFile').value);
+            
+            if (input.files.length === 0) return alert("Please choose a PDF file first.");
+
+            if (mode === 'fixed' && (isNaN(pagesPerFile) || pagesPerFile <= 0)) {
+                return alert("Page count must be greater than zero.");
+            }
+
+            const file = input.files[0];
+            btn.disabled = true;
+            btn.innerText = "Analyzing…";
+            progressText.classList.remove('hidden');
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+                const pageCount = pdfDoc.getPageCount();
+
+                if (mode === 'fixed' && pagesPerFile >= pageCount) {
+                    alert(`This PDF has only ${pageCount} page(s). With ${pagesPerFile} pages per file, nothing would be split—try a smaller value.`);
+                    btn.disabled = false;
+                    btn.innerText = "Split PDF";
+                    progressText.classList.add('hidden');
+                    return;
+                }
+
+                if (mode === 'fixed' && pagesPerFile > pageCount / 2) {
+                    const ok = confirm(`This PDF has ${pageCount} pages. Splitting every ${pagesPerFile} pages yields only 2 files (first chunk: ${pagesPerFile} pages, second: the remainder). Continue?`);
+                    if (!ok) {
+                        btn.disabled = false;
+                        btn.innerText = "Split PDF";
+                        progressText.classList.add('hidden');
+                        return;
+                    }
+                }
+
+                const zip = new JSZip();
+                const step = (mode === 'every') ? 1 : pagesPerFile;
+
+                for (let i = 0; i < pageCount; i += step) {
+                    progressText.innerText = `Processing part ${Math.floor(i/step) + 1}…`;
+                    
+                    const newPdf = await PDFLib.PDFDocument.create();
+                    const pagesToCopy = [];
+                    for (let j = i; j < i + step && j < pageCount; j++) {
+                        pagesToCopy.push(j);
+                    }
+
+                    const copiedPages = await newPdf.copyPages(pdfDoc, pagesToCopy);
+                    copiedPages.forEach(page => newPdf.addPage(page));
+
+                    const pdfBytes = await newPdf.save();
+                    const fileName = (mode === 'every') 
+                        ? `page_${i + 1}.pdf` 
+                        : `pages_${i+1}_to_${Math.min(i+step, pageCount)}.pdf`;
+                    
+                    zip.file(fileName, pdfBytes);
+                    await new Promise(resolve => setTimeout(resolve, 5));
+                }
+
+                progressText.innerText = "Preparing download…";
+                const zipContent = await zip.generateAsync({ type: "blob" });
+                const fileName = `Split_${file.name}.zip`;
+                if (typeof addToHistory === 'function') {
+                    const historyId = await addToHistory('Split PDF', fileName, zipContent);
+                    window.location.href = `../go.html?id=${historyId}`;
+                } else {
+                    saveFile(URL.createObjectURL(zipContent), fileName);
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert("Something went wrong. The PDF may be encrypted or damaged.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Split PDF";
+                progressText.classList.add('hidden');
+            }
+        }
+
+        function toggleSplitInput() {
+            const mode = document.getElementById('splitMode').value;
+            const inputDiv = document.getElementById('fixedPageInput');
+            
+            if (mode === 'fixed') {
+                inputDiv.style.display = 'block';
+            } else {
+                inputDiv.style.display = 'none';
+            }
+        }
+
+        window.onload = () => {
+            renderHistoryUI('Split PDF');
+        };
+    </script>
+<script src="../js/main.js"></script></body>
+</html>
