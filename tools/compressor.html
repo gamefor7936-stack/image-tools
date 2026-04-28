@@ -315,14 +315,37 @@
         // 4. Download & Monetisasi
         async function downloadResult() {
             if (!compressedBlob) return alert("Please compress the image first.");
-            
-            // Ambil ekstensi asli (jpg/png/webp)
-            const ext = originalFile.name.split('.').pop();
-            const finalFileName = `Compressed_${originalFile.name}`;
 
-            // Gunakan fungsi ajaib kita dari history.js
-            // compressedBlob di sini adalah hasil dari library imageCompression
-            await processRedirect('Image Compressor', finalFileName, compressedBlob);
+            // --- PROSES PENCUCIAN GAMBAR (Canvas Washing) ---
+            const img = new Image();
+            const url = URL.createObjectURL(compressedBlob);
+            img.src = url;
+
+            img.onload = async () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                const ctx = canvas.getContext('2d');
+                
+                // Gambar ulang di canvas
+                ctx.drawImage(img, 0, 0);
+
+                // Ekstrak menjadi Blob baru yang 100% Standar Windows
+                // Kita gunakan quality 0.9 agar tidak menurunkan kualitas lagi
+                canvas.toBlob(async (finalBlob) => {
+                    const extension = compressedBlob.type.split('/')[1] || 'jpg';
+                    
+                    // Nama file dibersihkan total
+                    const cleanName = originalFile.name.split('.')[0].replace(/\s+/g, '_');
+                    const finalFileName = `Compressed_${cleanName}.${extension}`;
+
+                    // Kirim ke redirect engine
+                    await processRedirect('Image Compressor', finalFileName, finalBlob);
+                    
+                    // Bersihkan memori
+                    URL.revokeObjectURL(url);
+                }, compressedBlob.type, 0.9);
+            };
         }
 
         function formatBytes(bytes) {
