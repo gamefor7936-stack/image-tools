@@ -1,72 +1,250 @@
 <!DOCTYPE html>
-
-<html lang="en">
+<html lang="en" class="light">
 <head>
-<meta charset="utf-8"/>
-<title>Password Generator - MARK_Tools</title>
-<meta name="description" content="Generate highly secure, random passwords instantly. Protect your online accounts with customizable length and character sets.">
-<link rel="icon" type="image/png" href="../favicon.png">
-<link rel="apple-touch-icon" href="../favicon.png">
-<meta property="og:image" content="https://marktoolbox.com/favicon.png">
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="../js/history.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Password Generator - MARK_Tools</title>
+    <meta name="description" content="Generate highly secure, random passwords instantly. Check password strength and hacker crack time locally in your browser.">
+    <link rel="icon" type="image/png" href="../favicon.png">
+    <link rel="apple-touch-icon" href="../favicon.png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/history.js"></script>
+
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { colors: { darkBg: '#0f172a', darkCard: '#1e293b', darkBorder: '#334155' } } } }
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) { document.documentElement.classList.add('dark'); } else { document.documentElement.classList.remove('dark'); }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .crack-animation { transition: width 0.5s ease-in-out, background-color 0.5s ease-in-out; }
+    </style>
 </head>
-<body class="bg-gray-50 p-6">
-<div class="max-w-xl mx-auto">
-<a class="text-blue-500 text-sm mb-4 inline-block" href="/">← Back to home</a>
-<div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-<div class="mb-4 text-slate-700">
-<svg class="h-10 w-10" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-<path d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-</svg>
-</div>
-<h3 class="text-xl font-semibold mb-2">Password Generator</h3>
-<div class="flex mb-4">
-<input class="w-full p-2 bg-gray-100 border rounded-l text-sm font-mono text-blue-600 font-bold" id="passOutput" readonly="" type="text"/>
-<button class="bg-gray-200 px-3 rounded-r border-y border-r text-xs" onclick="copyPass()">Copy</button>
-</div>
-<input class="w-full mb-2" id="passLength" max="32" min="8" type="range" value="16"/>
-<p class="text-[10px] text-center mb-4 text-gray-500">Length: <span id="lenVal">16</span> characters</p>
-<button class="w-full bg-slate-800 text-white py-2 rounded-lg font-bold" onclick="generatePass()">Generate strong password</button>
-</div>
-<section class="mt-12">
-<div class="flex items-center gap-2 mb-4 px-4">
-<svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<h3 class="font-bold text-slate-700">Recent history</h3>
-</div>
-<div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm" id="historyList">
-</div>
-</section>
-</div>
-<script>
-        document.getElementById('passLength')?.addEventListener('input', (e) => {
-            document.getElementById('lenVal').innerText = e.target.value;
-        });
+<body class="bg-[#f8fafc] dark:bg-darkBg text-slate-900 dark:text-slate-300 min-h-screen flex flex-col">
+
+    <nav class="bg-white/80 dark:bg-darkBg/80 backdrop-blur-lg sticky top-0 z-50 border-b border-slate-200 dark:border-darkBorder shadow-sm">
+        <div class="container mx-auto px-4 h-16 flex justify-between items-center max-w-6xl">
+            <a href="../index.html" class="flex items-center gap-2 group">
+                <div class="w-8 h-8 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-lg flex items-center justify-center shadow-md">
+                    <span class="text-white font-black text-sm">M</span>
+                </div>
+                <h1 class="text-xl font-black tracking-tighter text-slate-800 dark:text-white">MARK_Tools <span class="text-teal-600 dark:text-teal-400 font-medium text-sm hidden md:inline">| Security</span></h1>
+            </a>
+            <a class="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-teal-600 transition" href="../index.html">← BACK TO HOME</a>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-12 max-w-5xl flex-grow flex flex-col lg:flex-row gap-8">
+        
+        <!-- KOLOM KIRI: PENGATURAN PASSWORD -->
+        <div class="w-full lg:w-1/2 flex flex-col gap-6">
+            <div class="bg-white dark:bg-darkCard p-8 rounded-3xl shadow-xl border border-slate-200 dark:border-darkBorder">
+                <h2 class="text-2xl font-black text-slate-800 dark:text-white mb-2">Password Generator</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mb-8 uppercase tracking-widest font-bold">Client-Side Security</p>
+
+                <!-- Panjang Password -->
+                <div class="mb-8">
+                    <div class="flex justify-between items-center mb-4">
+                        <label class="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest">Length</label>
+                        <span id="lenDisplay" class="text-2xl font-black text-teal-600 dark:text-teal-400 font-mono">16</span>
+                    </div>
+                    <input type="range" id="passLength" min="4" max="64" value="16" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-teal-500" oninput="generatePass()">
+                </div>
+
+                <!-- Opsi Karakter -->
+                <div class="space-y-4 mb-8">
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <input type="checkbox" id="incUpper" checked class="w-5 h-5 text-teal-600 rounded border-slate-300 focus:ring-teal-500" onchange="generatePass()">
+                        <span class="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-teal-600 transition">Uppercase (A-Z)</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <input type="checkbox" id="incLower" checked class="w-5 h-5 text-teal-600 rounded border-slate-300 focus:ring-teal-500" onchange="generatePass()">
+                        <span class="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-teal-600 transition">Lowercase (a-z)</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <input type="checkbox" id="incNumbers" checked class="w-5 h-5 text-teal-600 rounded border-slate-300 focus:ring-teal-500" onchange="generatePass()">
+                        <span class="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-teal-600 transition">Numbers (0-9)</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer group">
+                        <input type="checkbox" id="incSymbols" checked class="w-5 h-5 text-teal-600 rounded border-slate-300 focus:ring-teal-500" onchange="generatePass()">
+                        <span class="text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-teal-600 transition">Symbols (!@#$%^&*)</span>
+                    </label>
+                </div>
+
+                <button onclick="generatePass()" class="w-full bg-slate-800 dark:bg-slate-900 hover:bg-slate-700 dark:hover:bg-black text-white py-4 rounded-xl font-black uppercase tracking-widest transition shadow-lg flex justify-center items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                    Regenerate
+                </button>
+            </div>
+            
+            <!-- Histori -->
+            <div class="bg-white dark:bg-darkCard p-6 rounded-3xl border border-slate-200 dark:border-darkBorder shadow-sm">
+                <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Export History</h4>
+                <div id="historyList" class="space-y-2 max-h-40 overflow-y-auto"></div>
+            </div>
+        </div>
+
+        <!-- KOLOM KANAN: HASIL & TIME TO CRACK -->
+        <div class="w-full lg:w-1/2 flex flex-col gap-6">
+            
+            <!-- Output Area -->
+            <div class="bg-[#020617] p-8 rounded-3xl shadow-2xl border border-slate-800 relative group overflow-hidden">
+                <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiLz48L3N2Zz4=')] opacity-50 pointer-events-none"></div>
+                
+                <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">Generated Password</h3>
+                
+                <textarea id="passOutput" readonly class="w-full bg-transparent border-none text-2xl md:text-3xl font-black font-mono text-teal-400 outline-none resize-none break-all" rows="3"></textarea>
+                
+                <div class="flex gap-3 mt-6 relative z-10">
+                    <button onclick="copyPass()" class="flex-1 bg-teal-600 hover:bg-teal-500 text-white py-3 rounded-xl font-bold uppercase text-xs tracking-widest transition shadow-lg shadow-teal-900/50">
+                        Copy Password
+                    </button>
+                    <button onclick="exportToTxt()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-3 rounded-xl font-bold uppercase text-xs tracking-widest transition border border-slate-700">
+                        Save to TXT
+                    </button>
+                </div>
+            </div>
+
+            <!-- TIME TO CRACK METER (Fitur Super Keren) -->
+            <div class="bg-white dark:bg-darkCard p-8 rounded-3xl shadow-xl border border-slate-200 dark:border-darkBorder">
+                <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2">Password Strength</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">Time needed for a hacker to crack this password using a cluster of modern GPUs (100 Billion guesses/second).</p>
+                
+                <!-- Progress Bar -->
+                <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-3 mb-4 overflow-hidden">
+                    <div id="strengthBar" class="h-3 rounded-full crack-animation" style="width: 0%; background-color: #ef4444;"></div>
+                </div>
+
+                <div class="text-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Time to Crack</p>
+                    <p id="crackTime" class="text-xl md:text-2xl font-black text-rose-500 font-mono tracking-tight">Instantly</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        window.onload = () => {
+            generatePass();
+            if(typeof renderHistoryUI === 'function') renderHistoryUI('Password Gen');
+        };
 
         function generatePass() {
-            const length = document.getElementById('passLength').value;
-            const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+~`|}{[]:;?><,./-=";
-            let retVal = "";
-            for (let i = 0, n = charset.length; i < length; ++i) {
-                retVal += charset.charAt(Math.floor(Math.random() * n));
+            const length = parseInt(document.getElementById('passLength').value);
+            document.getElementById('lenDisplay').innerText = length;
+
+            const incUpper = document.getElementById('incUpper').checked;
+            const incLower = document.getElementById('incLower').checked;
+            const incNum = document.getElementById('incNumbers').checked;
+            const incSym = document.getElementById('incSymbols').checked;
+
+            let charset = "";
+            let poolSize = 0;
+
+            if (incUpper) { charset += "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; poolSize += 26; }
+            if (incLower) { charset += "abcdefghijklmnopqrstuvwxyz"; poolSize += 26; }
+            if (incNum) { charset += "0123456789"; poolSize += 10; }
+            if (incSym) { charset += "!@#$%^&*()_+~`|}{[]:;?><,./-="; poolSize += 30; }
+
+            if (charset === "") {
+                document.getElementById('passOutput').value = "Please select at least one option.";
+                updateStrengthMeter(0, 0);
+                return;
             }
-            document.getElementById('passOutput').value = retVal;
+
+            let password = "";
+            const array = new Uint32Array(length);
+            window.crypto.getRandomValues(array); // Cryptographically secure random (Standar keamanan asli)
+
+            for (let i = 0; i < length; i++) {
+                password += charset[array[i] % charset.length];
+            }
+
+            document.getElementById('passOutput').value = password;
+            updateStrengthMeter(length, poolSize);
+        }
+
+        // --- MATEMATIKA HACKER (TIME TO CRACK) ---
+        function updateStrengthMeter(length, poolSize) {
+            const bar = document.getElementById('strengthBar');
+            const timeText = document.getElementById('crackTime');
+
+            if (poolSize === 0) {
+                bar.style.width = "0%";
+                timeText.innerText = "N/A";
+                return;
+            }
+
+            // Hitung total kemungkinan kombinasi: (PoolSize) pangkat (Panjang)
+            // Menggunakan BigInt/Logaritma untuk mencegah Infinity di Javascript
+            let entropyBits = length * Math.log2(poolSize);
+            
+            // Asumsi kecepatan hacker: 100 Miliar tebakan per detik
+            const guessesPerSecond = 100e9; 
+            const combinations = Math.pow(2, entropyBits);
+            let secondsToCrack = combinations / guessesPerSecond;
+
+            let text = "";
+            let width = "0%";
+            let color = "#ef4444"; // Red
+
+            if (secondsToCrack < 1) {
+                text = "Instantly"; width = "10%"; color = "#ef4444";
+            } else if (secondsToCrack < 60) {
+                text = `${Math.round(secondsToCrack)} Seconds`; width = "25%"; color = "#f97316";
+            } else if (secondsToCrack < 3600) {
+                text = `${Math.round(secondsToCrack / 60)} Minutes`; width = "40%"; color = "#f59e0b";
+            } else if (secondsToCrack < 86400) {
+                text = `${Math.round(secondsToCrack / 3600)} Hours`; width = "60%"; color = "#eab308";
+            } else if (secondsToCrack < 31536000) {
+                text = `${Math.round(secondsToCrack / 86400)} Days`; width = "75%"; color = "#84cc16";
+            } else if (secondsToCrack < 3153600000) {
+                text = `${Math.round(secondsToCrack / 31536000)} Years`; width = "90%"; color = "#22c55e";
+            } else if (secondsToCrack < 315360000000) {
+                text = `${Math.round(secondsToCrack / 3153600000)} Centuries`; width = "100%"; color = "#10b981";
+            } else {
+                text = "Trillions of Years (Universe Level 🌌)"; width = "100%"; color = "#059669";
+                timeText.classList.replace('text-rose-500', 'text-teal-500');
+            }
+
+            // Update UI Color
+            if(secondsToCrack < 31536000) {
+                timeText.classList.replace('text-teal-500', 'text-rose-500');
+                timeText.style.color = color;
+            } else {
+                timeText.style.color = color;
+            }
+
+            bar.style.width = width;
+            bar.style.backgroundColor = color;
+            timeText.innerText = text;
         }
 
         function copyPass() {
             const copyText = document.getElementById("passOutput");
-            if (!copyText.value) return;
+            if (!copyText.value || copyText.value.startsWith("Please")) return;
             copyText.select();
             navigator.clipboard.writeText(copyText.value);
-            alert("Password copied to clipboard.");
+            alert("Password successfully copied to clipboard!");
         }
 
-        window.onload = () => {
-            renderHistoryUI('Password Generator');
-        };
-    </script>
-<script src="../js/main.js"></script>
+        // Export ke TXT agar bisa dilempar ke go.html (Iklan)
+        async function exportToTxt() {
+            const pass = document.getElementById("passOutput").value;
+            if (!pass || pass.startsWith("Please")) return;
 
+            const blob = new Blob([`Generated by MARK_Tools\n\nPassword: ${pass}`], { type: 'text/plain' });
+            const fileName = `Secure_Password_${Date.now()}.txt`;
+
+            if(typeof processRedirect === 'function') {
+                await processRedirect('Password Gen', fileName, blob);
+            }
+        }
+    </script>
 <!-- SEO CONTENT AREA -->
 <section class="py-16 bg-slate-50 border-t border-slate-200">
     <div class="container mx-auto px-4 max-w-4xl prose prose-slate">
@@ -102,6 +280,5 @@
 
     </div>
 </section>
-
 </body>
 </html>
