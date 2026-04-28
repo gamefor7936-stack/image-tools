@@ -104,14 +104,28 @@
     window.onload = () => { 
         if(typeof renderHistoryUI === 'function') renderHistoryUI('Image to PDF'); 
         
-        // Inisialisasi Sortable.js
         const grid = document.getElementById('imageGrid');
         sortableInstance = new Sortable(grid, {
             animation: 150,
             ghostClass: 'sortable-ghost',
-            dragClass: 'sortable-drag'
+            dragClass: 'sortable-drag',
+            // TAMBAHAN: Event listener saat proses drag selesai
+            onEnd: function (evt) {
+                updatePageNumbers();
+            }
         });
     };
+
+    // FUNGSI BARU: Untuk mengupdate nomor urut di sudut gambar
+    function updatePageNumbers() {
+        const gridItems = document.getElementById('imageGrid').children;
+        Array.from(gridItems).forEach((item, index) => {
+            const numBadge = item.querySelector('.page-number');
+            if (numBadge) {
+                numBadge.innerText = index + 1;
+            }
+        });
+    }
 
     function handleFiles(input) {
         if (!input.files.length) return;
