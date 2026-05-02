@@ -1,127 +1,277 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
     <meta charset="utf-8" />
-    <title>Secure Base64 Converter (Encode/Decode) - MARK_Tools</title>
-    <meta name="description" content="Free online Base64 converter. Safely encode text and images or decode Base64 strings directly in your browser. 100% client-side processing.">
+    <title>Base64 Converter (Encode/Decode)</title>
+    <meta name="description" content="Free online Base64 converter. Safely encode text and images or decode Base64 strings directly in your browser. 100% client-side processing, no server uploads.">
     <link rel="icon" type="image/png" href="../favicon.png">
     <link rel="apple-touch-icon" href="../favicon.png">
     <meta property="og:image" content="https://marktoolbox.com/favicon.png">
+    
+    <!-- Framework & Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="../js/main.js"></script>
     <script src="../js/history.js"></script>
 
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;600;700&display=swap');
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .font-sans { font-family: 'Inter', sans-serif; }
+        
+        .term-input { background: #0f172a; border: 1px solid #334155; color: #38bdf8; font-family: 'JetBrains Mono', monospace; transition: all 0.3s; }
+        .term-input:focus { border-color: #38bdf8; box-shadow: 0 0 10px rgba(56, 189, 248, 0.2); outline: none; }
+        .glass-dark { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+        
+        /* Custom Scrollbar for Textarea */
+        textarea::-webkit-scrollbar { width: 8px; }
+        textarea::-webkit-scrollbar-track { background: #0f172a; border-radius: 4px; }
+        textarea::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        textarea::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
 </head>
 
-<body class="bg-gray-50 p-6">
-    <div class="max-w-xl mx-auto">
-        <a class="text-blue-500 text-sm mb-4 inline-block" href="/">← Back to home</a>
-        <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-            <div class="mb-4 text-blue-500 font-bold text-2xl font-mono">B64</div>
-            <h3 class="text-xl font-semibold mb-2">Base64 Converter</h3>
-            <div class="space-y-3">
-                <textarea class="w-full p-2 border rounded text-xs font-mono" id="b64Input"
-                    placeholder="Type text or paste Base64…" rows="3"></textarea>
-                <div class="grid grid-cols-2 gap-2">
-                    <button class="bg-blue-600 text-white py-2 rounded text-[10px] font-bold" onclick="encodeB64()">Text
-                        → Base64</button>
-                    <button class="bg-gray-700 text-white py-2 rounded text-[10px] font-bold"
-                        onclick="decodeB64()">Base64 → text</button>
+<body class="bg-[#0b1120] text-slate-300 font-sans min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-800">
+        <div class="container mx-auto px-6 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="/" class="text-blue-400 font-black text-xl tracking-tighter hover:opacity-80">MARK_Tools</a>
+                <span class="text-slate-600">|</span>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Dev / Crypto</span>
+            </div>
+            <a href="/" class="text-xs font-bold text-slate-400 hover:text-blue-400 transition">BACK TO HOME</a>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8 flex-grow flex flex-col lg:flex-row gap-6">
+        
+        <!-- LEFT/TOP: INPUT & CONTROLS -->
+        <div class="w-full lg:w-2/3 flex flex-col gap-6">
+            
+            <div class="glass-dark p-6 rounded-3xl shadow-2xl relative">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-blue-500/20 text-blue-400 rounded-xl flex items-center justify-center">
+                            <span class="font-mono font-bold text-lg">B64</span>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold text-white">Base64 Converter</h1>
+                            <p class="text-xs text-slate-400 uppercase tracking-widest">Encode & Decode Safely</p>
+                        </div>
+                    </div>
+                    <button onclick="clearAll()" class="text-xs font-bold text-slate-500 hover:text-red-400 transition flex items-center gap-1 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg> Clear
+                    </button>
                 </div>
-                <div class="border-t pt-3 mt-3">
-                    <label class="block text-[10px] font-bold text-gray-400 mb-1">Or encode an image file</label>
-                    <input accept="image/*" class="block w-full text-[10px]" id="b64File" onchange="imageToBase64()"
-                        type="file" />
+
+                <div class="relative mb-4">
+                    <textarea id="b64Input" class="w-full p-4 rounded-xl term-input text-sm resize-y" rows="8" placeholder="Paste your text or Base64 string here..." oninput="updateCharCount()"></textarea>
+                    <div id="charCount" class="absolute bottom-3 right-3 text-[10px] text-slate-500 font-mono font-bold">0 chars</div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <button onclick="encodeB64()" class="bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-black uppercase text-xs tracking-widest transition shadow-lg shadow-blue-900/50 flex justify-center items-center gap-2">
+                        <span>Encode (Text → Base64)</span>
+                    </button>
+                    <button onclick="decodeB64()" class="bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-black uppercase text-xs tracking-widest transition shadow-lg shadow-indigo-900/50 flex justify-center items-center gap-2">
+                        <span>Decode (Base64 → Text)</span>
+                    </button>
+                </div>
+
+                <!-- Image to Base64 Area -->
+                <div class="border-t border-slate-700/50 pt-6 mt-2">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Or Convert Image to Data URI (Base64)</label>
+                    <div class="relative border-2 border-dashed border-slate-600 rounded-xl p-6 text-center hover:border-blue-500 transition hover:bg-blue-900/10 group cursor-pointer" onclick="document.getElementById('b64File').click()">
+                        <input type="file" id="b64File" accept="image/*" class="hidden" onchange="imageToBase64()">
+                        <svg class="mx-auto h-8 w-8 text-slate-500 group-hover:text-blue-400 mb-2 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <p class="text-sm text-slate-300 font-semibold">Click or drag image file here</p>
+                        <p class="text-[10px] text-slate-500 mt-1">Supports JPG, PNG, GIF, SVG</p>
+                    </div>
+                </div>
+
+                <!-- Action Button for Output -->
+                <div class="mt-4 flex justify-end">
+                    <button onclick="copyToClipboard()" id="copyBtn" class="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-600/50 py-2 px-4 rounded-lg font-bold text-xs uppercase tracking-widest transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        Copy Output
+                    </button>
                 </div>
             </div>
         </div>
-        <section class="mt-12">
-            <div class="flex items-center gap-2 mb-4 px-4">
-                <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"
-                        stroke-width="2"></path>
-                </svg>
-                <h3 class="font-bold text-slate-700">Recent history</h3>
+
+        <!-- RIGHT: HISTORY & INFO -->
+        <div class="w-full lg:w-1/3 flex flex-col gap-6">
+            <div class="glass-dark p-5 rounded-2xl hidden lg:block">
+                <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Recent History
+                </h4>
+                <div id="historyList" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
             </div>
-            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm" id="historyList">
+
+            <!-- Mini Tips Box -->
+            <div class="bg-indigo-900/30 border border-indigo-500/30 p-5 rounded-2xl">
+                <h4 class="text-indigo-400 font-bold text-sm mb-2 flex items-center gap-2">💡 Pro Tip</h4>
+                <p class="text-xs text-indigo-200/70 leading-relaxed">
+                    Converting images to Base64 Data URIs is perfect for embedding small icons directly into CSS or HTML to reduce HTTP requests. However, it increases file size by ~33%.
+                </p>
             </div>
-        </section>
-    </div>
+        </div>
+    </main>
+
+    <!-- Script Logic -->
     <script>
+        const inputArea = document.getElementById('b64Input');
+        const charCount = document.getElementById('charCount');
+        const copyBtn = document.getElementById('copyBtn');
+
+        function updateCharCount() {
+            charCount.innerText = `${inputArea.value.length} chars`;
+            copyBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg> Copy Output`;
+        }
+
+        function clearAll() {
+            inputArea.value = '';
+            document.getElementById('b64File').value = '';
+            updateCharCount();
+        }
+
         function encodeB64() {
-            const input = document.getElementById('b64Input');
+            if(!inputArea.value.trim()) return alert("Please enter text to encode.");
             try {
-                input.value = btoa(unescape(encodeURIComponent(input.value)));
+                inputArea.value = btoa(unescape(encodeURIComponent(inputArea.value)));
+                updateCharCount();
             } catch (e) {
                 alert("Encoding failed. Check that the text is valid.");
             }
         }
 
         function decodeB64() {
-            const input = document.getElementById('b64Input');
+            if(!inputArea.value.trim()) return alert("Please enter Base64 string to decode.");
             try {
-                input.value = decodeURIComponent(escape(atob(input.value)));
+                // Remove whitespaces/newlines before decoding
+                let cleanBase64 = inputArea.value.replace(/\s/g, '');
+                inputArea.value = decodeURIComponent(escape(atob(cleanBase64)));
+                updateCharCount();
             } catch (e) {
-                alert("Invalid Base64 string.");
+                alert("Invalid Base64 string! Make sure you are decoding valid Base64 data.");
             }
         }
 
         function imageToBase64() {
             const file = document.getElementById('b64File').files[0];
-            const output = document.getElementById('b64Input');
             if (!file) return;
 
+            // Check if file is an image
+            if (!file.type.startsWith('image/')) {
+                return alert("Please upload an image file.");
+            }
+
+            // Check size limit (e.g. 5MB) so browser doesn't freeze
+            if (file.size > 5 * 1024 * 1024) {
+                return alert("File is too large! Please use images under 5MB.");
+            }
+
             const reader = new FileReader();
-            reader.onload = function (e) {
-                output.value = e.target.result;
+            reader.onload = async function (e) {
+                const base64String = e.target.result;
+                inputArea.value = base64String;
+                updateCharCount();
+
+                // Save to history (Simulation)
+                if (typeof addToHistory === 'function') {
+                    // Blob for text file if user wants to download
+                    const blob = new Blob([base64String], { type: 'text/plain' });
+                    await addToHistory('Base64 Converter', `B64_${file.name}.txt`, blob);
+                    renderHistoryUI('Base64 Converter');
+                }
             };
             reader.readAsDataURL(file);
         }
 
+        async function copyToClipboard() {
+            if(!inputArea.value) return;
+            try {
+                await navigator.clipboard.writeText(inputArea.value);
+                copyBtn.innerHTML = `<svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Copied!`;
+            } catch (err) {
+                alert('Failed to copy. Please copy manually.');
+            }
+        }
+
+        // Drag and drop setup
+        const dropZone = document.querySelector('.border-dashed');
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-blue-400', 'bg-blue-900/20'); });
+        dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('border-blue-400', 'bg-blue-900/20'); });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-blue-400', 'bg-blue-900/20');
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                document.getElementById('b64File').files = e.dataTransfer.files;
+                imageToBase64();
+            }
+        });
+
         window.onload = () => {
-            renderHistoryUI('Base64 Converter');
+            if(typeof renderHistoryUI === 'function') renderHistoryUI('Base64 Converter');
         };
     </script>
 
-<!-- SEO CONTENT AREA -->
-<section class="py-16 bg-slate-50 border-t border-slate-200">
-    <div class="container mx-auto px-4 max-w-4xl prose prose-slate">
-        
-        <h2 class="text-2xl font-bold text-slate-800 mb-4">What is Base64 Converter?</h2>
-        <p class="text-sm text-slate-600 mb-6 leading-relaxed">
-            Data encoding is a daily task for web developers. Our <strong>Base64 converter</strong> allows you to seamlessly transform plain text or image files into safe, ASCII-compliant Base64 strings. Because MARK_Tools operates entirely on the client-side, your sensitive API keys, tokens, and private images are never sent to external servers.
-        </p>
+    <!-- SEO CONTENT AREA (Detailed Developer Guide) -->
+    <section class="py-16 bg-slate-50 border-t border-slate-200 mt-12 text-slate-800">
+        <div class="container mx-auto px-4 max-w-4xl prose prose-slate">
+            
+            <h2 class="text-3xl font-black text-slate-900 mb-6 tracking-tight">What is a Base64 Converter?</h2>
+            <p class="text-sm md:text-base text-slate-600 mb-6 leading-relaxed">
+                A <strong>Base64 Converter</strong> is a fundamental developer tool used to encode binary data (like images, audio, or complex character sets) into a safe, plain-text ASCII string format. Because MARK_Tools operates entirely on the client-side utilizing modern browser APIs, your sensitive data, API keys, and private files are encoded/decoded instantly <strong>without ever being sent to a remote server.</strong>
+            </p>
 
-        <h2 class="text-2xl font-bold text-slate-800 mb-4">How to Use This Tool</h2>
-        <ol class="list-decimal pl-5 text-sm text-slate-600 mb-8 space-y-2">
-            <li><strong>Text Encoding:</strong> Paste text and click "Text → Base64".</li>
-            <li><strong>Text Decoding:</strong> Paste Base64 string and click "Base64 → text".</li>
-            <li><strong>Image Encoding:</strong> Select image file to convert to Base64 data URI.</li>
-            <li><strong>Copy Results:</strong> Click on any result to copy to clipboard.</li>
-        </ol>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-bold text-slate-800 mb-3 text-red-600">Encoding ≠ Encryption</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        A common misconception is that Base64 secures data. <strong>It does not.</strong> Base64 is merely an encoding scheme designed to prevent data corruption during transit across systems that expect text. Anyone who intercepts a Base64 string can easily decode it. Do not use Base64 to "hide" passwords.
+                    </p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-bold text-slate-800 mb-3">What are Data URIs?</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        When you upload an image to our tool, it generates a Data URI (e.g., <code>data:image/png;base64,...</code>). Web developers paste these strings directly into HTML <code>&lt;img src=""&gt;</code> tags or CSS files to render graphics without needing an extra HTTP request to fetch the image file.
+                    </p>
+                </div>
+            </div>
 
-        <h2 class="text-2xl font-bold text-slate-800 mb-4">Frequently Asked Questions (FAQ)</h2>
-        <div class="space-y-4">
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h4 class="font-bold text-slate-800 mb-2">What is Base64 used for?</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">Base64 encodes binary data as text for safe transmission over text-based protocols like HTTP, email, and JSON APIs.</p>
+            <h2 class="text-3xl font-black text-slate-900 mb-6 tracking-tight">Common Developer Use Cases</h2>
+            <div class="space-y-4 mb-12">
+                <div class="border-l-4 border-blue-500 pl-4 py-1">
+                    <h4 class="font-bold text-slate-800 text-lg">JSON Web Tokens (JWT)</h4>
+                    <p class="text-sm text-slate-600">The payload and header of every JWT are Base64Url encoded. You can paste a JWT segment here to quickly decode and inspect its JSON contents.</p>
+                </div>
+                <div class="border-l-4 border-emerald-500 pl-4 py-1">
+                    <h4 class="font-bold text-slate-800 text-lg">Basic Authentication Headers</h4>
+                    <p class="text-sm text-slate-600">HTTP Basic Auth requires credentials to be formatted as <code>username:password</code> and then Base64 encoded before being sent in the header.</p>
+                </div>
+                <div class="border-l-4 border-amber-500 pl-4 py-1">
+                    <h4 class="font-bold text-slate-800 text-lg">Email Attachments (MIME)</h4>
+                    <p class="text-sm text-slate-600">Email protocols (SMTP) cannot handle binary files natively. Attachments like PDFs and Images are automatically Base64 encoded under the hood before your email is sent.</p>
+                </div>
             </div>
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h4 class="font-bold text-slate-800 mb-2">Is Base64 encryption?</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">No, Base64 is encoding, not encryption. Anyone can decode it. It's used to ensure binary data can be transmitted as text.</p>
+
+            <h2 class="text-3xl font-black text-slate-900 mb-6 tracking-tight">Frequently Asked Questions</h2>
+            <div class="space-y-4">
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <h4 class="font-bold text-slate-800 mb-2">Why did my Base64 string size increase?</h4>
+                    <p class="text-sm text-slate-600 leading-relaxed">Base64 encoding uses 4 characters to represent every 3 bytes of raw data. This mathematical ratio means that your output string will always be approximately <strong>33% larger</strong> than the original file or text. Therefore, embedding massive images as Base64 in CSS can bloat your page size and harm performance.</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <h4 class="font-bold text-slate-800 mb-2">Can I decode Base64 into an image?</h4>
+                    <p class="text-sm text-slate-600 leading-relaxed">Yes! If you have a Base64 string that starts with a MIME type header like <code>data:image/jpeg;base64,</code>, you can simply paste that entire string into your browser's URL address bar and hit enter. The browser will render the image instantly.</p>
+                </div>
             </div>
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h4 class="font-bold text-slate-800 mb-2">When should I use Base64?</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">Use for embedding images in CSS/HTML, sending binary data in JSON, API authentication tokens, and any binary-to-text conversion.</p>
-            </div>
+
         </div>
-
-    </div>
-</section>
+    </section>
 
 </body>
-
 </html>
