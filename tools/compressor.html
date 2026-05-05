@@ -1,144 +1,194 @@
 <!DOCTYPE html>
-<html lang="en" class="light">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Image Compressor - MARK_Tools</title>
-    <meta name="description" content="Compress JPG, PNG, and WebP images securely in your browser. View real-time before/after quality comparisons and save storage space.">
+    <title>Image Compressor | Compress JPG, PNG, and WebP images</title>
+    <meta name="description" content="Compress JPG, PNG, and WebP images securely in your browser. View real-time before/after quality comparisons. 100% offline processing, zero server uploads.">
     <link rel="icon" type="image/png" href="../favicon.png">
+    <link rel="apple-touch-icon" href="../favicon.png">
+    <meta property="og:image" content="https://marktoolbox.com/favicon.png">
     
+    <!-- Framework & Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.1/dist/browser-image-compression.js"></script>
     <script src="../js/main.js"></script>
     <script src="../js/history.js"></script>
-
-    <script>
-        tailwind.config = { 
-            darkMode: 'class', 
-            theme: { extend: { colors: { darkBg: '#0f172a', darkCard: '#1e293b', darkBorder: '#334155' } } } 
-        }
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-        }
-    </script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;600;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s; }
+        body { font-family: 'Inter', sans-serif; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
         
-        .compare-wrapper { position: relative; width: 100%; border-radius: 1.5rem; background-color: #020617; background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 20px 20px; overflow: hidden; }
-        .compare-overlay { position: absolute; top: 0; left: 0; width: 50%; height: 100%; overflow: hidden; border-right: 2px solid white; z-index: 10; }
-        .slider-handle { position: absolute; top: 0; left: 50%; bottom: 0; width: 4px; background: transparent; cursor: ew-resize; z-index: 20; transform: translateX(-50%); touch-action: none; }
-        .slider-btn { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; background: white; border-radius: 50%; box-shadow: 0 0 20px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; pointer-events: none; border: 4px solid #f97316; }
+        .glass-dark { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+        .input-dark { background: #0f172a; border: 1px solid #334155; color: #f97316; transition: all 0.3s; }
+        .input-dark:focus { border-color: #f97316; box-shadow: 0 0 10px rgba(249, 115, 22, 0.2); outline: none; }
+
+        /* Compare Slider Pro Styles */
+        .compare-wrapper { 
+            position: relative; width: 100%; border-radius: 1rem; 
+            background-color: #020617; 
+            background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px); 
+            background-size: 20px 20px; overflow: hidden; 
+            user-select: none;
+        }
+        .compare-overlay { 
+            position: absolute; top: 0; left: 0; width: 50%; height: 100%; 
+            overflow: hidden; border-right: 2px solid #f97316; z-index: 10; 
+        }
+        .slider-handle { 
+            position: absolute; top: 0; left: 50%; bottom: 0; width: 4px; 
+            background: transparent; cursor: ew-resize; z-index: 20; 
+            transform: translateX(-50%); touch-action: pan-y; 
+        }
+        .slider-btn { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            width: 36px; height: 36px; background: #0f172a; border-radius: 50%; 
+            box-shadow: 0 0 15px rgba(0,0,0,0.8); display: flex; align-items: center; 
+            justify-content: center; pointer-events: none; border: 3px solid #f97316; 
+        }
         
+        /* Cyberpunk Scanner Animation */
         @keyframes scan { 0% { top: 0; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
-        .scanning-line { position: absolute; left: 0; right: 0; height: 4px; background: #f97316; box-shadow: 0 0 15px #f97316; animation: scan 2s linear infinite; z-index: 30; }
+        .scanning-line { position: absolute; left: 0; right: 0; height: 3px; background: #f97316; box-shadow: 0 0 15px #f97316; animation: scan 2s linear infinite; z-index: 30; }
     </style>
 </head>
-<body class="bg-[#f8fafc] dark:bg-darkBg text-slate-900 dark:text-slate-300 min-h-screen">
+<body class="bg-[#0b1120] text-slate-300 min-h-screen flex flex-col">
 
-    <nav class="bg-white/80 dark:bg-darkBg/80 backdrop-blur-lg sticky top-0 z-50 border-b border-slate-200 dark:border-darkBorder shadow-sm">
-        <div class="container mx-auto px-4 h-16 flex justify-between items-center max-w-7xl">
-            <a href="../index.html" class="flex items-center gap-2 group">
-                <div class="w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg flex items-center justify-center shadow-md">
-                    <span class="text-white font-black text-sm">M</span>
-                </div>
-                <h1 class="text-xl font-black tracking-tighter text-slate-800 dark:text-white">MARK_Tools <span class="text-orange-500 font-medium text-sm">| Image</span></h1>
-            </a>
-            <a class="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-orange-500" href="../index.html">← BACK</a>
+    <!-- Navbar -->
+    <nav class="bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-800">
+        <div class="container mx-auto px-6 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="/" class="text-orange-400 font-black text-xl tracking-tighter hover:opacity-80 transition">MARK_Tools</a>
+                <span class="text-slate-600">|</span>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Image / Media</span>
+            </div>
+            <a href="/" class="text-xs font-bold text-slate-400 hover:text-orange-400 transition">BACK TO HOME</a>
         </div>
     </nav>
 
-    <main class="container mx-auto px-4 py-8 max-w-7xl flex flex-col lg:flex-row gap-8">
+    <main class="container mx-auto px-4 py-8 flex-grow flex flex-col lg:flex-row gap-6 max-w-7xl">
         
-        <!-- SIDEBAR -->
+        <!-- LEFT SIDEBAR: CONTROLS -->
         <div class="w-full lg:w-80 flex flex-col gap-6 shrink-0">
-            <div class="bg-white dark:bg-darkCard p-8 rounded-3xl shadow-xl border border-slate-200 dark:border-darkBorder">
-                <h2 class="text-xl font-black mb-6 uppercase tracking-tight">Compressor</h2>
+            <div class="glass-dark p-6 rounded-3xl shadow-2xl border-t-4 border-t-orange-500">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-12 h-12 bg-orange-500/20 text-orange-400 rounded-xl flex items-center justify-center">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-black text-white tracking-tight">Pro Compressor</h2>
+                        <p class="text-[10px] text-slate-400 uppercase tracking-widest">Local Image Optimizer</p>
+                    </div>
+                </div>
 
-                <label id="uploadBox" class="w-full h-32 border-2 border-dashed border-orange-300 dark:border-orange-500/50 rounded-2xl flex flex-col items-center justify-center cursor-pointer bg-orange-50 dark:bg-orange-500/10 hover:bg-orange-100 transition-all mb-6">
-                    <span class="text-2xl mb-1">🖼️</span>
-                    <span class="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase">Select Image</span>
-                    <input accept="image/*" class="hidden" id="imageInput" type="file" onchange="handleImageUpload(this)"/>
+                <!-- Upload Area -->
+                <label id="uploadBox" class="w-full py-10 border-2 border-dashed border-slate-600 hover:border-orange-500 rounded-2xl flex flex-col items-center justify-center cursor-pointer bg-slate-800/30 hover:bg-orange-900/10 transition-all mb-4 group">
+                    <span class="text-3xl text-slate-500 group-hover:text-orange-400 mb-2 transition">+</span>
+                    <span class="text-[11px] font-bold text-slate-400 group-hover:text-orange-300 uppercase tracking-widest">Select Image</span>
+                    <span class="text-[9px] text-slate-500 mt-1">JPG, PNG, WebP allowed</span>
+                    <input accept="image/jpeg, image/png, image/webp" class="hidden" id="imageInput" type="file" onchange="handleImageUpload(this)"/>
                 </label>
 
+                <!-- Tool Controls (Hidden Initially) -->
                 <div id="controlsArea" class="hidden space-y-6 animate-fade-in">
-                    <!-- Warning Box (Default Hidden) -->
-                    <div id="sizeWarning" class="hidden p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-500 text-[10px] font-bold leading-relaxed">
-                        ⚠️ WARNING: Compressed size is larger than original. The image is already highly optimized.
+                    
+                    <!-- Warning Box for Highly Optimized Images -->
+                    <div id="sizeWarning" class="hidden p-3 bg-red-900/30 border border-red-500/50 rounded-xl flex items-start gap-2">
+                        <svg class="w-4 h-4 text-red-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <p class="text-red-300 text-[10px] font-bold leading-relaxed">Compressed size is larger. This image is already highly optimized.</p>
                     </div>
 
                     <div>
                         <div class="flex justify-between items-end mb-2">
-                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Quality</label>
-                            <span id="qualityLabel" class="text-orange-500 font-bold text-xs font-mono">Balanced (70%)</span>
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Quality Level</label>
+                            <span id="qualityLabel" class="text-orange-400 font-bold text-[11px] font-mono bg-orange-900/30 px-2 py-0.5 rounded">Balanced (70%)</span>
                         </div>
-                        <input type="range" id="qualitySlider" min="0.1" max="1.0" step="0.1" value="0.7" class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-orange-500" onchange="processCompression()">
+                        <input type="range" id="qualitySlider" min="0.1" max="1.0" step="0.1" value="0.7" class="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-orange-500" onchange="triggerCompression()">
+                        <div class="flex justify-between text-[8px] text-slate-500 font-bold uppercase mt-1">
+                            <span>Max Compression</span>
+                            <span>Lossless</span>
+                        </div>
                     </div>
 
-                    <button onclick="downloadResult()" id="btnDownload" class="w-full bg-orange-600 hover:bg-orange-500 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-orange-900/30">
-                        Save & Download
-                    </button>
-                    
-                    <button onclick="resetApp()" class="w-full text-[9px] font-bold text-slate-400 hover:text-red-500 uppercase tracking-[0.2em] mt-2 transition-colors">
-                        Discard Image
-                    </button>
+                    <div class="pt-2">
+                        <button onclick="downloadResult()" id="btnDownload" class="w-full bg-orange-600 hover:bg-orange-500 text-white py-3.5 rounded-xl font-black uppercase text-xs tracking-widest shadow-lg shadow-orange-900/50 transition flex items-center justify-center gap-2 disabled:opacity-50">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Save Output
+                        </button>
+                        
+                        <button onclick="resetApp()" class="w-full text-[10px] font-bold text-slate-500 hover:text-red-400 uppercase tracking-widest mt-3 transition-colors">
+                            Discard & Try Another
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-darkCard p-6 rounded-3xl border border-slate-200 dark:border-darkBorder shadow-sm">
-                <h4 class="text-[10px] font-bold text-slate-400 uppercase mb-4 tracking-widest">History</h4>
-                <div id="historyList" class="space-y-2 max-h-60 overflow-y-auto"></div>
+            <!-- Area Histori -->
+            <div class="glass-dark p-5 rounded-2xl hidden lg:block">
+                <h4 class="text-[10px] font-bold text-slate-400 uppercase mb-3 tracking-widest flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Recent History
+                </h4>
+                <div id="historyList" class="space-y-2 max-h-40 overflow-y-auto pr-1"></div>
             </div>
         </div>
 
-        <!-- MAIN WORKSPACE (WIDE) -->
+        <!-- MAIN WORKSPACE -->
         <div class="flex-grow flex flex-col gap-6 min-w-0">
             
-            <div id="emptyState" class="bg-white dark:bg-darkCard rounded-3xl p-20 border border-slate-200 dark:border-darkBorder shadow-sm h-full flex flex-col items-center justify-center text-center opacity-30 italic">
-                <p class="font-mono text-sm tracking-widest uppercase">Waiting for Image...</p>
+            <div id="emptyState" class="glass-dark rounded-3xl p-10 lg:p-20 shadow-sm h-full flex flex-col items-center justify-center text-center opacity-50 border border-slate-800 border-dashed">
+                <svg class="w-16 h-16 text-slate-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <p class="font-mono text-sm tracking-widest uppercase text-slate-400">Waiting for Image...</p>
+                <p class="text-xs text-slate-500 mt-2">Upload a file to view the before/after comparison.</p>
             </div>
 
-            <div id="workspaceArea" class="hidden flex-col gap-6 animate-fade-in">
+            <div id="workspaceArea" class="hidden flex-col gap-6">
                 
-                <!-- PARAMETERS (Row 1) -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-200 dark:border-darkBorder text-center">
-                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Original</p>
-                        <p id="statOriginal" class="text-xl font-mono font-bold text-slate-800 dark:text-white">---</p>
+                <!-- STATS PANEL -->
+                <div class="grid grid-cols-3 gap-3 md:gap-4">
+                    <div class="glass-dark p-4 md:p-6 rounded-2xl text-center flex flex-col justify-center">
+                        <p class="text-[9px] md:text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Original Size</p>
+                        <p id="statOriginal" class="text-sm md:text-xl font-mono font-bold text-slate-300">---</p>
                     </div>
-                    <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border-2 border-emerald-500/20 dark:border-emerald-500/20 text-center relative overflow-hidden">
-                        <div class="absolute inset-0 bg-emerald-500/5"></div>
-                        <p class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest mb-1 relative z-10">Space Saved</p>
-                        <p id="statSaved" class="text-3xl font-mono font-black text-emerald-500 relative z-10">---</p>
+                    <div class="bg-emerald-900/20 border-2 border-emerald-500/30 p-4 md:p-6 rounded-2xl text-center relative overflow-hidden flex flex-col justify-center shadow-[0_0_15px_rgba(16,185,129,0.1)]">
+                        <p class="text-[9px] md:text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-1">Space Saved</p>
+                        <p id="statSaved" class="text-xl md:text-3xl font-mono font-black text-emerald-400">---</p>
                     </div>
-                    <div class="bg-white dark:bg-darkCard p-6 rounded-2xl border border-slate-200 dark:border-darkBorder text-center">
-                        <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">New Size</p>
-                        <p id="statNew" class="text-xl font-mono font-bold text-orange-500">---</p>
+                    <div class="glass-dark p-4 md:p-6 rounded-2xl text-center flex flex-col justify-center border-orange-500/30">
+                        <p class="text-[9px] md:text-[10px] font-bold text-orange-400/70 uppercase tracking-widest mb-1">Compressed</p>
+                        <p id="statNew" class="text-sm md:text-xl font-mono font-bold text-orange-400">---</p>
                     </div>
                 </div>
 
-                <!-- WIDE PREVIEW (Row 2) -->
-                <div class="bg-white dark:bg-darkCard p-3 rounded-[2rem] border border-slate-200 dark:border-darkBorder shadow-2xl relative">
-                    <div class="absolute top-6 left-6 z-30 bg-black/60 text-white px-3 py-1 rounded-full backdrop-blur-md text-[9px] font-black uppercase tracking-widest">Compressed (After)</div>
-                    <div class="absolute top-6 right-6 z-30 bg-black/60 text-white px-3 py-1 rounded-full backdrop-blur-md text-[9px] font-black uppercase tracking-widest">Original (Before)</div>
+                <!-- PREVIEW SLIDER -->
+                <div class="glass-dark p-2 md:p-3 rounded-3xl shadow-2xl relative">
+                    
+                    <!-- Labels -->
+                    <div class="absolute top-5 left-5 z-30 bg-black/70 border border-slate-700 text-slate-200 px-3 py-1.5 rounded-lg backdrop-blur-md text-[9px] font-black uppercase tracking-widest">After</div>
+                    <div class="absolute top-5 right-5 z-30 bg-black/70 border border-slate-700 text-slate-200 px-3 py-1.5 rounded-lg backdrop-blur-md text-[9px] font-black uppercase tracking-widest">Before</div>
 
-                    <div id="scanOverlay" class="absolute inset-0 z-40 bg-slate-900/90 backdrop-blur-sm rounded-[1.8rem] hidden flex-col items-center justify-center">
+                    <!-- Loading Scanner -->
+                    <div id="scanOverlay" class="absolute inset-0 z-40 bg-[#0b1120]/90 backdrop-blur-sm rounded-[1.2rem] hidden flex-col items-center justify-center">
                         <div class="scanning-line"></div>
-                        <p class="text-orange-500 font-mono text-xs font-bold tracking-[0.3em] animate-pulse">OPTIMIZING PIXELS...</p>
+                        <div class="w-10 h-10 border-4 border-slate-700 border-t-orange-500 rounded-full animate-spin mb-4"></div>
+                        <p id="loadingMsg" class="text-orange-400 font-mono text-xs font-bold tracking-[0.2em] animate-pulse">OPTIMIZING PIXELS...</p>
                     </div>
 
-                    <div class="compare-wrapper min-h-[400px] md:min-h-[550px]" id="compareContainer">
-                        <img id="imgBefore" class="compare-img" src="" alt="Before">
+                    <!-- Compare Container -->
+                    <div class="compare-wrapper min-h-[300px] md:min-h-[500px]" id="compareContainer">
+                        <!-- Before Image (Base) -->
+                        <img id="imgBefore" class="w-full h-auto block" src="" alt="Before">
+                        
+                        <!-- After Image (Clipped Overlay) -->
                         <div class="compare-overlay" id="compareOverlay">
-                            <img id="imgAfter" class="compare-img" style="max-width: none;" src="" alt="After">
+                            <img id="imgAfter" class="max-w-none h-auto block" src="" alt="After">
                         </div>
+                        
+                        <!-- Drag Handle -->
                         <div class="slider-handle" id="sliderHandle">
                             <div class="slider-btn">
-                                <svg class="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path d="M8 7h8M8 12h8M8 17h8" /></svg>
+                                <svg class="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9h8M8 15h8" /></svg>
                             </div>
                         </div>
                     </div>
@@ -150,52 +200,88 @@
     <script>
         let originalFile = null;
         let compressedBlob = null;
+        let isProcessing = false;
 
+        // Inisialisasi Drag/Slider event & ResizeObserver
         window.onload = () => { 
             if(typeof renderHistoryUI === 'function') renderHistoryUI('Image Compressor'); 
             initCompareSlider();
+            initResizeObserver();
+            setupDragAndDrop();
         };
 
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('uploadBox');
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-orange-500', 'bg-orange-900/20'); });
+            dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('border-orange-500', 'bg-orange-900/20'); });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-orange-500', 'bg-orange-900/20');
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    document.getElementById('imageInput').files = e.dataTransfer.files;
+                    handleImageUpload(document.getElementById('imageInput'));
+                }
+            });
+        }
+
+        // Penanganan masalah rendering UI di HP kentang
         function handleImageUpload(input) {
             if (!input.files[0]) return;
             originalFile = input.files[0];
             
+            // 1. Tampilkan UI seketika
             document.getElementById('uploadBox').classList.add('hidden');
             document.getElementById('emptyState').classList.add('hidden');
             document.getElementById('controlsArea').classList.remove('hidden');
             document.getElementById('workspaceArea').classList.replace('hidden', 'flex');
 
+            // 2. Set gambar asli
             const objUrl = URL.createObjectURL(originalFile);
             document.getElementById('imgBefore').src = objUrl;
-            document.getElementById('imgAfter').src = objUrl;
+            document.getElementById('imgAfter').src = objUrl; // Semantara sama dengan asli
             document.getElementById('statOriginal').innerText = formatBytes(originalFile.size);
             
-            processCompression();
+            // 3. FIX RACE CONDITION: Beri jeda 150ms agar DOM selesai menggambar imgBefore
+            // sebelum CPU dihantam oleh WebWorker Kompresi.
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    triggerCompression();
+                }, 150);
+            });
         }
 
-        async function processCompression() {
-            if (!originalFile) return;
+        async function triggerCompression() {
+            if (!originalFile || isProcessing) return;
+            isProcessing = true;
 
             const slider = document.getElementById('qualitySlider');
             const val = parseFloat(slider.value);
             const scanOverlay = document.getElementById('scanOverlay');
             const warningBox = document.getElementById('sizeWarning');
+            const btn = document.getElementById('btnDownload');
 
-            document.getElementById('qualityLabel').innerText = `${Math.round(val*100)}% Quality`;
+            // Update Label text
+            let labelText = "Balanced";
+            if(val > 0.8) labelText = "High Quality";
+            else if(val < 0.4) labelText = "Max Compress";
+            document.getElementById('qualityLabel').innerText = `${labelText} (${Math.round(val*100)}%)`;
 
+            // Tampilkan Loading
             scanOverlay.classList.replace('hidden', 'flex');
+            btn.disabled = true;
 
             const options = {
-                maxSizeMB: val * 2, // Estimasi target MB
+                maxSizeMB: val * 3, // Skala estimasi library
                 maxWidthOrHeight: 2560,
                 useWebWorker: true,
                 initialQuality: val
             };
 
             try {
+                // Proses Kompresi Berat
                 compressedBlob = await imageCompression(originalFile, options);
                 
-                // Update Stats
+                // Update Statistik UI
                 const newSize = compressedBlob.size;
                 document.getElementById('statNew').innerText = formatBytes(newSize);
                 
@@ -203,22 +289,45 @@
                 let percent = Math.round((diff / originalFile.size) * 100);
                 document.getElementById('statSaved').innerText = (percent > 0 ? percent : 0) + "% ↓";
 
-                // WARNING MECHANISM
+                // Warning jika file malah membesar
                 if (newSize >= originalFile.size) {
                     warningBox.classList.remove('hidden');
+                    document.getElementById('statSaved').innerText = "0%";
+                    document.getElementById('statSaved').classList.replace('text-emerald-400', 'text-slate-500');
                 } else {
                     warningBox.classList.add('hidden');
+                    document.getElementById('statSaved').classList.replace('text-slate-500', 'text-emerald-400');
                 }
 
+                // Render hasil baru
                 document.getElementById('imgAfter').src = URL.createObjectURL(compressedBlob);
-                syncImageSize();
 
             } catch (error) {
-                console.error(error);
-                alert("Compression error.");
+                console.error("Compression Failed:", error);
+                document.getElementById('loadingMsg').innerText = "ERROR OCCURRED!";
+                setTimeout(() => alert("Terjadi kesalahan saat memproses gambar. File mungkin rusak."), 500);
             } finally {
                 scanOverlay.classList.replace('flex', 'hidden');
+                btn.disabled = false;
+                isProcessing = false;
             }
+        }
+
+        // --- FIXED: Menggunakan ResizeObserver untuk memastikan Lebar Preview Akurat di HP Lambat ---
+        function initResizeObserver() {
+            const wrapper = document.getElementById('compareContainer');
+            const imgAfter = document.getElementById('imgAfter');
+
+            if (!wrapper || !imgAfter) return;
+
+            const resizeObserver = new ResizeObserver(entries => {
+                for (let entry of entries) {
+                    if(entry.contentRect.width > 0) {
+                        imgAfter.style.width = entry.contentRect.width + 'px';
+                    }
+                }
+            });
+            resizeObserver.observe(wrapper);
         }
 
         function initCompareSlider() {
@@ -227,37 +336,39 @@
             const handle = document.getElementById('sliderHandle');
             
             const moveDrag = (e) => {
-                if (e.buttons !== 1 && e.type !== 'touchmove') return;
+                // Pastikan hanya berjalan jika di-drag/disentuh
+                if (e.type === 'mousemove' && e.buttons !== 1) return;
+                
                 let rect = wrapper.getBoundingClientRect();
                 let clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 let x = Math.max(0, Math.min(clientX - rect.left, rect.width));
                 let percent = (x / rect.width) * 100;
+                
                 overlay.style.width = percent + '%';
                 handle.style.left = percent + '%';
             };
 
             wrapper.addEventListener('mousemove', moveDrag);
-            wrapper.addEventListener('touchmove', moveDrag, {passive: false});
+            wrapper.addEventListener('touchmove', (e) => {
+                // Prevent scrolling vertical saat slider digeser horizontal
+                moveDrag(e);
+            }, {passive: true});
         }
-
-        function syncImageSize() {
-            const wrapper = document.getElementById('compareContainer');
-            const imgAfter = document.getElementById('imgAfter');
-            if(wrapper && imgAfter) imgAfter.style.width = wrapper.offsetWidth + 'px';
-        }
-
-        window.addEventListener('resize', syncImageSize);
 
         async function downloadResult() {
             if (!compressedBlob) return;
-            const cleanName = originalFile.name.split('.')[0].replace(/\s+/g, '_');
-            const ext = originalFile.name.split('.').pop();
-            const fileName = `Compressed_${cleanName}.${ext}`;
+            
+            // Nama File Bersih
+            const cleanName = originalFile.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_');
+            const ext = originalFile.name.split('.').pop() || "jpg";
+            const fileName = `MARK_Compressed_${cleanName}.${ext}`;
 
-            // Tetap izinkan download hasil kompresi (walaupun lebih besar)
-            // Tapi user sudah melihat peringatan di UI
-            if (typeof processRedirect === 'function') {
-                await processRedirect('Image Compressor', fileName, compressedBlob);
+            // Redirect & Simpan
+            if (typeof addToHistory === 'function') {
+                const historyId = await addToHistory('Image Compressor', fileName, compressedBlob);
+                window.location.href = `../go.html?id=${historyId}`;
+            } else {
+                saveFile(URL.createObjectURL(compressedBlob), fileName);
             }
         }
 
@@ -272,40 +383,45 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
         }
     </script>
+
     <!-- SEO CONTENT AREA -->
-    <section class="py-16 bg-slate-50 border-t border-slate-200">
+    <section class="py-16 bg-slate-50 border-t border-slate-200 mt-12 text-slate-800 -mx-4 px-4 lg:mx-0 lg:px-0 lg:rounded-3xl lg:mb-12 z-10 relative">
         <div class="container mx-auto px-4 max-w-4xl prose prose-slate">
             
-            <h2 class="text-2xl font-bold text-slate-800 mb-4">What is Image Compressor?</h2>
-            <p class="text-sm text-slate-600 mb-6 leading-relaxed">
-                Image Compressor reduces file sizes of JPEG, PNG, and WebP images while maintaining visual quality. Perfect for web optimization, faster loading times, and reducing storage space without noticeable quality loss.
+            <h2 class="text-3xl font-black text-slate-900 mb-6 tracking-tight">Zero-Trust Image Optimization</h2>
+            <p class="text-sm md:text-base text-slate-600 mb-6 leading-relaxed">
+                In 2026, Core Web Vitals and page speed dictate SEO rankings. Shrinking your website's heavy imagery is no longer optional. However, uploading your unreleased product photos or personal portraits to a random cloud converter poses massive privacy risks. Our <strong>Client-Side Image Compressor</strong> leverages advanced HTML5 Web Workers to shrink JPEGs, PNGs, and WebPs directly inside your browser's memory.
             </p>
 
-            <h2 class="text-2xl font-bold text-slate-800 mb-4">How to Use This Tool</h2>
-            <ol class="list-decimal pl-5 text-sm text-slate-600 mb-8 space-y-2">
-                <li><strong>Upload Image:</strong> Select your JPEG, PNG, or WebP image file.</li>
-                <li><strong>Adjust Quality:</strong> Use the slider to balance file size vs. quality.</li>
-                <li><strong>Compress:</strong> Click "Compress & download" to process the image.</li>
-            </ol>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-bold text-slate-800 mb-3 text-orange-600">Visual Quality Slider</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Adjusting compression isn't guesswork anymore. Move our dynamic slider to control the strictness of the algorithm. Our split-screen <strong>Before / After interactive preview</strong> lets you spot compression artifacts or pixelation in real-time before you save the file.
+                    </p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-bold text-slate-800 mb-3 text-emerald-600">WebP Ready</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Our engine fully supports next-gen formats like WebP. If you upload a WebP file, we utilize specialized quantization algorithms to squeeze out unnecessary byte data while retaining the transparent alpha channels.
+                    </p>
+                </div>
+            </div>
 
-            <h2 class="text-2xl font-bold text-slate-800 mb-4">Frequently Asked Questions (FAQ)</h2>
+            <h2 class="text-3xl font-black text-slate-900 mb-6 tracking-tight">Frequently Asked Questions</h2>
             <div class="space-y-4">
-                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <h4 class="font-bold text-slate-800 mb-2">How much quality is lost during compression?</h4>
-                    <p class="text-sm text-slate-500 leading-relaxed">Quality loss depends on the slider setting. Higher quality (0.7-1.0) preserves more detail but results in larger files.</p>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition hover:shadow-md">
+                    <h4 class="font-bold text-slate-800 mb-2">Why does the warning "Size is Larger" appear?</h4>
+                    <p class="text-sm text-slate-600 leading-relaxed">If you upload an image that has already been aggressively optimized (like an image downloaded from Facebook or WhatsApp), trying to compress it again using a standard format wrapper can mathematically increase its file size. The tool warns you so you don't overwrite a perfectly good file.</p>
                 </div>
-                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <h4 class="font-bold text-slate-800 mb-2">Which image formats are supported?</h4>
-                    <p class="text-sm text-slate-500 leading-relaxed">Supports JPEG, PNG, and WebP formats. Each format has different compression characteristics and use cases.</p>
-                </div>
-                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <h4 class="font-bold text-slate-800 mb-2">Can I compress multiple images at once?</h4>
-                    <p class="text-sm text-slate-500 leading-relaxed">Currently processes one image at a time. For batch compression, process images sequentially or use our bulk tools.</p>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition hover:shadow-md">
+                    <h4 class="font-bold text-slate-800 mb-2">Are my images saved on your servers?</h4>
+                    <p class="text-sm text-slate-600 leading-relaxed">Absolutely not. This tool operates on a strict <strong>Zero-Trust Architecture</strong>. You can literally turn off your Wi-Fi, upload an image, and it will still compress perfectly because all the processing code runs locally on your smartphone or computer processor.</p>
                 </div>
             </div>
 
         </div>
     </section>
 
-<script src="../js/main.js"></script></body>
+</body>
 </html>
