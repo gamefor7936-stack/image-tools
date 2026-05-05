@@ -1,100 +1,260 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<title>CASE CONVERTER &amp; WORD COUNT - MARK_Tools</title>
-<meta name="description" content="Free word counter and character calculator. Instantly convert text to UPPERCASE, lowercase, or Title Case. Perfect for writers and editors.">
-<link rel="icon" type="image/png" href="../favicon.png">
-<link rel="apple-touch-icon" href="../favicon.png">
-<meta property="og:image" content="https://marktoolbox.com/favicon.png">
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="../js/history.js"></script>
-</head>
-<body class="bg-gray-50 p-6">
-<div class="max-w-xl mx-auto">
-<a class="text-blue-500 text-sm mb-4 inline-block" href="/">← Back to home</a>
-<div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-<div class="mb-4 text-pink-500">
-<svg class="h-10 w-10" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-<path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-</svg>
-</div>
-<h3 class="text-xl font-semibold mb-2">Case Converter</h3>
-<textarea class="w-full p-2 border rounded text-sm mb-2" id="textContent" oninput="countText()" placeholder="Type or paste text here…" rows="3"></textarea>
-<div class="flex justify-between text-[10px] text-gray-500 mb-3">
-<span>Words: <b id="wordCount">0</b></span>
-<span>Characters: <b id="charCount">0</b></span>
-</div>
-<div class="grid grid-cols-2 gap-2">
-<button class="bg-gray-200 p-1 rounded text-[10px] font-bold" onclick="convertCase('upper')">UPPERCASE</button>
-<button class="bg-gray-200 p-1 rounded text-[10px] font-bold" onclick="convertCase('lower')">lowercase</button>
-</div>
-</div>
-<section class="mt-12">
-<div class="flex items-center gap-2 mb-4 px-4">
-<svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<h3 class="font-bold text-slate-700">Recent history</h3>
-</div>
-<div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm" id="historyList">
-</div>
-</section>
-</div>
-<script>
-        function countText() {
-            const text = document.getElementById('textContent').value;
-            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-            document.getElementById('wordCount').innerText = words;
-            document.getElementById('charCount').innerText = text.length;
-        }
+    <meta charset="utf-8"/>
+    <title>Case Converter & Text Analyzer</title>
+    <meta name="description" content="Free local word counter and character calculator. Instantly convert text to UPPERCASE, lowercase, Title Case, or Sentence case. Perfect for writers and SEO editors.">
+    <link rel="icon" type="image/png" href="../favicon.png">
+    <link rel="apple-touch-icon" href="../favicon.png">
+    <meta property="og:image" content="https://marktoolbox.com/favicon.png">
+    
+    <!-- Framework & Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/history.js"></script>
 
-        function convertCase(type) {
-            const area = document.getElementById('textContent');
-            if (type === 'upper') area.value = area.value.toUpperCase();
-            if (type === 'lower') area.value = area.value.toLowerCase();
-            countText();
-        }
-
-        window.onload = () => {
-            renderHistoryUI('Case Converter');
-        };
-    </script>
-
-<!-- SEO CONTENT AREA -->
-<section class="py-16 bg-slate-50 border-t border-slate-200">
-    <div class="container mx-auto px-4 max-w-4xl prose prose-slate">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
         
-        <h2 class="text-2xl font-bold text-slate-800 mb-4">What is Case Converter & Word Counter?</h2>
-        <p class="text-sm text-slate-600 mb-6 leading-relaxed">
-            Case Converter & Word Counter provides instant text transformation and detailed content analysis. Convert text between uppercase, lowercase, and title case while tracking word counts, character counts, and other writing metrics in real-time.
-        </p>
+        .glass-dark { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+        
+        textarea {
+            background-color: #0f172a;
+            color: #e2e8f0;
+            border: 1px solid #334155;
+            transition: all 0.3s;
+            line-height: 1.6;
+        }
+        textarea:focus { border-color: #8b5cf6; outline: none; box-shadow: 0 0 15px rgba(139, 92, 246, 0.15); }
+        textarea::-webkit-scrollbar { width: 8px; }
+        textarea::-webkit-scrollbar-track { background: #0f172a; border-radius: 4px; }
+        textarea::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        textarea::-webkit-scrollbar-thumb:hover { background: #475569; }
+    </style>
+</head>
+<body class="bg-[#0b1120] text-slate-300 min-h-screen flex flex-col">
 
-        <h2 class="text-2xl font-bold text-slate-800 mb-4">How to Use This Tool</h2>
-        <ol class="list-decimal pl-5 text-sm text-slate-600 mb-8 space-y-2">
-            <li><strong>Enter Text:</strong> Type or paste your content in the text area.</li>
-            <li><strong>View Metrics:</strong> See live word and character counts.</li>
-            <li><strong>Convert Case:</strong> Click UPPERCASE or lowercase to transform the text.</li>
-            <li><strong>Copy Result:</strong> Select and copy the converted text.</li>
-        </ol>
+    <!-- Navbar -->
+    <nav class="bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-800">
+        <div class="container mx-auto px-6 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="/" class="text-violet-500 font-black text-xl tracking-tighter hover:opacity-80 transition">MARK_Tools</a>
+                <span class="text-slate-600">|</span>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Writing / SEO</span>
+            </div>
+            <a href="/" class="text-xs font-bold text-slate-400 hover:text-violet-500 transition">BACK TO HOME</a>
+        </div>
+    </nav>
 
-        <h2 class="text-2xl font-bold text-slate-800 mb-4">Frequently Asked Questions (FAQ)</h2>
-        <div class="space-y-4">
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h4 class="font-bold text-slate-800 mb-2">How does case conversion handle special characters?</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">Case conversion only affects letters (A-Z, a-z). Numbers, punctuation, and special characters remain unchanged.</p>
-            </div>
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h4 class="font-bold text-slate-800 mb-2">What counts as a word in the word counter?</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">Words are counted by splitting on whitespace. Contractions and hyphenated words count as single words.</p>
-            </div>
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h4 class="font-bold text-slate-800 mb-2">Does it support title case conversion?</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">Currently supports UPPERCASE and lowercase. For title case, consider using external tools or manual capitalization.</p>
+    <main class="container mx-auto px-4 py-8 flex-grow flex flex-col lg:flex-row gap-6 max-w-7xl">
+        
+        <!-- LEFT: MAIN WORKSPACE -->
+        <div class="w-full lg:w-2/3 flex flex-col gap-6">
+            <div class="glass-dark p-6 md:p-8 rounded-3xl shadow-2xl relative border-t-4 border-t-violet-500 flex flex-col h-full">
+                
+                <div class="flex items-start justify-between mb-6">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 bg-violet-500/10 text-violet-500 border border-violet-500/20 rounded-2xl flex items-center justify-center">
+                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path></svg>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-black text-white tracking-tight">Text Analyzer & Converter</h1>
+                            <p class="text-[11px] text-slate-400 uppercase tracking-widest mt-1">Format text and track metrics locally</p>
+                        </div>
+                    </div>
+                    <button onclick="clearText()" class="text-[10px] font-bold text-slate-500 hover:text-red-400 uppercase tracking-widest transition flex items-center gap-1 bg-slate-800/50 px-3 py-1.5 rounded-lg">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        Clear
+                    </button>
+                </div>
+
+                <!-- Action Buttons / Tools -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                    <button onclick="convertCase('sentence')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition border border-slate-700">Sentence case</button>
+                    <button onclick="convertCase('lower')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition border border-slate-700">lowercase</button>
+                    <button onclick="convertCase('upper')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition border border-slate-700">UPPERCASE</button>
+                    <button onclick="convertCase('title')" class="bg-slate-800 hover:bg-slate-700 text-slate-300 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest transition border border-slate-700">Title Case</button>
+                </div>
+
+                <!-- Text Area -->
+                <div class="relative flex-grow flex flex-col">
+                    <textarea id="textContent" class="w-full h-[350px] md:h-[400px] p-5 rounded-2xl text-sm resize-y shadow-inner" placeholder="Type or paste your document, essay, or code here..." oninput="analyzeText()"></textarea>
+                    
+                    <button onclick="copyText()" id="btnCopy" class="absolute bottom-4 right-4 bg-violet-600/20 hover:bg-violet-600 text-violet-400 hover:text-white border border-violet-600/50 px-4 py-2 rounded-lg font-black uppercase text-[10px] tracking-widest transition flex items-center gap-2 backdrop-blur-md">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        Copy Text
+                    </button>
+                </div>
             </div>
         </div>
 
-    </div>
-</section>
+        <!-- RIGHT: METRICS & SIDEBAR -->
+        <div class="w-full lg:w-1/3 flex flex-col gap-6">
+            
+            <div class="glass-dark p-6 rounded-3xl border border-slate-800">
+                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Text Metrics</h3>
+                
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="bg-[#0f172a] p-4 rounded-2xl border border-slate-800 text-center">
+                        <p class="text-3xl font-black text-violet-400 font-mono" id="wordCount">0</p>
+                        <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Words</p>
+                    </div>
+                    <div class="bg-[#0f172a] p-4 rounded-2xl border border-slate-800 text-center">
+                        <p class="text-3xl font-black text-blue-400 font-mono" id="charCount">0</p>
+                        <p class="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Characters</p>
+                    </div>
+                </div>
 
-<script src="../js/main.js"></script></body>
+                <div class="space-y-3 bg-[#0f172a] p-5 rounded-2xl border border-slate-800">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                        <span class="text-xs text-slate-400">Characters (No Spaces)</span>
+                        <span class="text-sm font-bold text-white font-mono" id="charNoSpaceCount">0</span>
+                    </div>
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                        <span class="text-xs text-slate-400">Sentences</span>
+                        <span class="text-sm font-bold text-white font-mono" id="sentenceCount">0</span>
+                    </div>
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                        <span class="text-xs text-slate-400">Paragraphs</span>
+                        <span class="text-sm font-bold text-white font-mono" id="paragraphCount">0</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-1">
+                        <span class="text-xs text-slate-400">Est. Reading Time</span>
+                        <span class="text-sm font-bold text-emerald-400 font-mono" id="readingTime">0 min</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Area Histori -->
+            <div class="glass-dark p-6 rounded-3xl flex-grow hidden lg:block border border-slate-800">
+                <h4 class="text-[10px] font-bold text-slate-400 uppercase mb-4 tracking-widest flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Session History
+                </h4>
+                <div id="historyList" class="space-y-2 max-h-40 overflow-y-auto pr-1"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const area = document.getElementById('textContent');
+
+        window.onload = () => {
+            if(typeof renderHistoryUI === 'function') renderHistoryUI('Case Converter');
+            analyzeText(); // Init zeroes
+        };
+
+        function analyzeText() {
+            const text = area.value;
+            
+            // Characters
+            document.getElementById('charCount').innerText = text.length;
+            document.getElementById('charNoSpaceCount').innerText = text.replace(/\s/g, '').length;
+
+            // Words
+            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+            document.getElementById('wordCount').innerText = words;
+
+            // Sentences
+            const sentences = text.trim() ? text.split(/[.!?]+/).filter(Boolean).length : 0;
+            document.getElementById('sentenceCount').innerText = sentences;
+
+            // Paragraphs
+            const paragraphs = text.trim() ? text.split(/\n+/).filter(Boolean).length : 0;
+            document.getElementById('paragraphCount').innerText = paragraphs;
+
+            // Reading Time (Avg 200 words per minute)
+            const minutes = Math.ceil(words / 200);
+            document.getElementById('readingTime').innerText = words > 0 ? `${minutes} min` : '0 min';
+        }
+
+        function convertCase(type) {
+            if(!area.value.trim()) return;
+
+            if (type === 'upper') {
+                area.value = area.value.toUpperCase();
+            } else if (type === 'lower') {
+                area.value = area.value.toLowerCase();
+            } else if (type === 'title') {
+                area.value = area.value.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+            } else if (type === 'sentence') {
+                area.value = area.value.toLowerCase().replace(/(^\s*\w|[\.\!\?]\s*\w)/g, (c) => c.toUpperCase());
+            }
+            
+            analyzeText();
+
+            // Save state to history for recovery
+            if(typeof addToHistory === 'function') {
+                const blob = new Blob([area.value], { type: 'text/plain' });
+                addToHistory('Case Converter', `Text_Export_${Date.now().toString().slice(-4)}.txt`, blob);
+                renderHistoryUI('Case Converter');
+            }
+        }
+
+        function clearText() {
+            area.value = '';
+            analyzeText();
+        }
+
+        async function copyText() {
+            if(!area.value.trim()) return;
+            const btn = document.getElementById('btnCopy');
+            try {
+                await navigator.clipboard.writeText(area.value);
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> COPIED!`;
+                btn.classList.add('bg-violet-600', 'text-white', 'border-violet-600');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalHtml;
+                    btn.classList.remove('bg-violet-600', 'text-white', 'border-violet-600');
+                }, 2000);
+            } catch (err) {
+                alert('Failed to copy text.');
+            }
+        }
+    </script>
+
+    <!-- SEO CONTENT AREA -->
+    <section class="py-16 bg-slate-50 border-t border-slate-200 mt-12 text-slate-800 -mx-4 px-4 lg:mx-0 lg:px-0 lg:rounded-t-3xl z-10 relative">
+        <div class="container mx-auto px-4 max-w-4xl prose prose-slate">
+            
+            <h2 class="text-3xl font-black text-slate-900 mb-6 tracking-tight">Offline Text Analyzer & Case Converter</h2>
+            <p class="text-sm md:text-base text-slate-600 mb-6 leading-relaxed">
+                Whether you are drafting an academic essay, optimizing SEO Meta Descriptions, or normalizing database string entries, our <strong>Text Analyzer</strong> provides instant, real-time metrics. Because MARK_Tools is a client-side platform, your unreleased manuscripts, private emails, and sensitive documents are processed directly in your browser without ever communicating with an external server.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-bold text-slate-800 mb-3 text-violet-600">Zero-Trust Keylogging Protection</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Many online "Word Counters" secretly log your keystrokes or send your pasted text to their backend servers for analysis. Our engine utilizes vanilla JavaScript Regex functions to count words, sentences, and calculate reading time entirely on your local machine memory (RAM).
+                    </p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-bold text-slate-800 mb-3">SEO Character Limits</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Digital marketers and SEO specialists rely on exact character counts. Google typically truncates Title Tags past 60 characters and Meta Descriptions past 155-160 characters. Use our live <strong>Character Count (No Spaces)</strong> metric to perfectly craft your metadata.
+                    </p>
+                </div>
+            </div>
+
+            <h2 class="text-3xl font-black text-slate-900 mb-6 tracking-tight">Frequently Asked Questions</h2>
+            <div class="space-y-4">
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition hover:shadow-md">
+                    <h4 class="font-bold text-slate-800 mb-2">What is Title Case vs Sentence Case?</h4>
+                    <p class="text-sm text-slate-600 leading-relaxed"><strong>Title Case</strong> capitalizes the first letter of Every Single Word (often used for Blog Titles or YouTube Thumbnails). <strong>Sentence case</strong> only capitalizes the first letter of the first word in a sentence, mirroring natural writing styles.</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition hover:shadow-md">
+                    <h4 class="font-bold text-slate-800 mb-2">How is Reading Time calculated?</h4>
+                    <p class="text-sm text-slate-600 leading-relaxed">The estimated reading time is based on the universally accepted average reading speed of adult humans, which is roughly 200 to 250 words per minute. Our tool divides your total word count by 200 and rounds up to the nearest minute.</p>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+</body>
 </html>

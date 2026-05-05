@@ -1,80 +1,241 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Social Media Image Resizer</title>
-    <meta name="description" content="Auto-crop and resize your photos for Instagram, YouTube, and Facebook in one click. Download all social media sizes packed in a single ZIP file.">
+    <meta charset="utf-8">
+    <title>Social Media Bulk Image Resizer | resize a single photo for Instagram, YouTube, TikTok, and X in one click</title>
+    <meta name="description" content="Auto-crop and resize a single photo for Instagram, YouTube, TikTok, and X in one click. Preview center-crops instantly and download as a ZIP file.">
     <link rel="icon" type="image/png" href="../favicon.png">
     <link rel="apple-touch-icon" href="../favicon.png">
     <meta property="og:image" content="https://marktoolbox.com/favicon.png">
+    
+    <!-- Framework & Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="../js/main.js"></script>
     <script src="../js/history.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-</head>
-<body class="bg-slate-50 p-6">
-    <div class="max-w-3xl mx-auto">
-        <a href="/" class="text-blue-600 text-sm mb-4 inline-block">← Back to home</a>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
         
-        <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-200">
-            <h2 class="text-2xl font-bold mb-2 text-slate-800">Social Media Resizer</h2>
-            <p class="text-xs text-slate-500 mb-8 text-balance uppercase tracking-widest font-bold">One photo → common social sizes (center crop)</p>
+        .glass-dark { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+        
+        /* Aspect Ratio Boxes for Preview */
+        .preview-box {
+            background-color: #0f172a;
+            border: 1px solid #334155;
+            overflow: hidden;
+            position: relative;
+        }
+        .preview-img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            object-position: center;
+            opacity: 0.5; transition: opacity 0.3s;
+        }
+        .preview-box.has-image .preview-img { opacity: 1; }
+        
+        /* Ratios */
+        .ratio-1-1 { aspect-ratio: 1 / 1; }
+        .ratio-9-16 { aspect-ratio: 9 / 16; }
+        .ratio-16-9 { aspect-ratio: 16 / 9; }
+        .ratio-19-1 { aspect-ratio: 1.91 / 1; }
+    </style>
+</head>
+<body class="bg-[#0b1120] text-slate-300 min-h-screen flex flex-col">
 
-            <div class="mb-8">
-                <input type="file" id="imageInput" accept="image/*" class="block w-full text-sm text-slate-500 file:mr-4 file:py-3 file:px-6 file:rounded-2xl file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-all cursor-pointer">
+    <!-- Navbar -->
+    <nav class="bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-800">
+        <div class="container mx-auto px-6 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="/" class="text-fuchsia-500 font-black text-xl tracking-tighter hover:opacity-80 transition">MARK_Tools</a>
+                <span class="text-slate-600">|</span>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Media / Graphic</span>
             </div>
-
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-8">
-                <div class="p-3 border rounded-xl text-center bg-slate-50">
-                    <p class="text-[9px] font-bold text-slate-400">IG POST</p>
-                    <p class="text-[10px]">1080 × 1080</p>
-                </div>
-                <div class="p-3 border rounded-xl text-center bg-slate-50">
-                    <p class="text-[9px] font-bold text-slate-400">IG STORY</p>
-                    <p class="text-[10px]">1080 × 1920</p>
-                </div>
-                <div class="p-3 border rounded-xl text-center bg-slate-50">
-                    <p class="text-[9px] font-bold text-slate-400">YT THUMB</p>
-                    <p class="text-[10px]">1280 × 720</p>
-                </div>
-                <div class="p-3 border rounded-xl text-center bg-slate-50">
-                    <p class="text-[9px] font-bold text-slate-400">FB POST</p>
-                    <p class="text-[10px]">1200 × 630</p>
-                </div>
-            </div>
-
-            <button onclick="resizeSocial()" id="resizeBtn" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-blue-700 transition-all">
-                Process &amp; download all (ZIP)
-            </button>
+            <a href="/" class="text-xs font-bold text-slate-400 hover:text-fuchsia-500 transition">BACK TO HOME</a>
         </div>
+    </nav>
 
-        <section class="mt-12">
-            <h3 class="font-bold text-slate-700 mb-4 px-4">Recent resizer history</h3>
-            <div id="historyList" class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm"></div>
-        </section>
-    </div>
+    <main class="container mx-auto px-4 py-8 flex-grow flex flex-col max-w-5xl gap-6">
+        
+        <div class="glass-dark p-6 md:p-10 rounded-3xl shadow-2xl relative border-t-4 border-t-fuchsia-500">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-fuchsia-500/20 text-fuchsia-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </div>
+                <h1 class="text-3xl font-black text-white mb-2 tracking-tight">Social Media Bulk Resizer</h1>
+                <p class="text-slate-400 text-sm">Upload one master photo → Automatically generate 4 common social sizes via smart center-crop.</p>
+            </div>
+
+            <!-- Upload Area -->
+            <label id="dropZone" class="w-full border-2 border-dashed border-slate-600 rounded-2xl p-10 flex flex-col items-center justify-center cursor-pointer bg-[#0f172a]/50 hover:bg-fuchsia-900/20 hover:border-fuchsia-500 transition text-center mb-8 group">
+                <span class="text-4xl mb-2 text-slate-500 group-hover:text-fuchsia-400 transition">+</span>
+                <span class="text-slate-300 font-bold group-hover:text-white transition">Select Master Image</span>
+                <span class="text-[10px] text-slate-500 mt-2 uppercase tracking-widest">JPG, PNG, WEBP Supported</span>
+                <input accept="image/*" class="hidden" id="imageInput" type="file" onchange="handleImageLoad(this)"/>
+            </label>
+
+            <!-- Preview Area -->
+            <div class="mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Live Crop Preview</h3>
+                    <button onclick="clearImage()" class="text-[10px] text-red-400 hover:underline">Reset</button>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <!-- IG Post -->
+                    <div class="flex flex-col gap-2">
+                        <div class="preview-box ratio-1-1 rounded-xl shadow-inner" id="pb-ig-post">
+                            <img src="" class="preview-img">
+                            <div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black/60 transition">
+                                <span class="text-[10px] font-bold text-white tracking-widest">1080 × 1080</span>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-[10px] font-bold text-slate-300 uppercase">IG / FB Post</p>
+                            <p class="text-[9px] text-slate-500 font-mono">1:1 Square</p>
+                        </div>
+                    </div>
+
+                    <!-- IG Story -->
+                    <div class="flex flex-col gap-2">
+                        <div class="preview-box ratio-9-16 rounded-xl shadow-inner" id="pb-ig-story">
+                            <img src="" class="preview-img">
+                            <div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black/60 transition">
+                                <span class="text-[10px] font-bold text-white tracking-widest">1080 × 1920</span>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-[10px] font-bold text-slate-300 uppercase">Reels / Story</p>
+                            <p class="text-[9px] text-slate-500 font-mono">9:16 Portrait</p>
+                        </div>
+                    </div>
+
+                    <!-- YT Thumb -->
+                    <div class="flex flex-col gap-2">
+                        <div class="preview-box ratio-16-9 rounded-xl shadow-inner" id="pb-yt-thumb">
+                            <img src="" class="preview-img">
+                            <div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black/60 transition">
+                                <span class="text-[10px] font-bold text-white tracking-widest">1280 × 720</span>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-[10px] font-bold text-slate-300 uppercase">YT Thumbnail</p>
+                            <p class="text-[9px] text-slate-500 font-mono">16:9 Landscape</p>
+                        </div>
+                    </div>
+
+                    <!-- Link Post -->
+                    <div class="flex flex-col gap-2">
+                        <div class="preview-box ratio-19-1 rounded-xl shadow-inner" id="pb-link-post">
+                            <img src="" class="preview-img">
+                            <div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black/60 transition">
+                                <span class="text-[10px] font-bold text-white tracking-widest">1200 × 630</span>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-[10px] font-bold text-slate-300 uppercase">X / LinkedIn Link</p>
+                            <p class="text-[9px] text-slate-500 font-mono">1.91:1 Banner</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Button -->
+            <button onclick="resizeSocial()" id="resizeBtn" class="w-full bg-fuchsia-600 hover:bg-fuchsia-500 text-white py-4 rounded-xl font-black uppercase text-sm tracking-widest transition shadow-lg shadow-fuchsia-900/50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2" disabled>
+                Process & Download ZIP
+            </button>
+            <p id="processStatus" class="text-center mt-3 text-xs text-fuchsia-400 font-mono hidden animate-pulse">Slicing graphics via Canvas API...</p>
+
+        </div>
+        
+        <!-- History -->
+        <div class="glass-dark p-6 rounded-3xl mb-8 border border-slate-800">
+            <h3 class="font-bold text-slate-400 uppercase tracking-widest text-[10px] mb-4 flex items-center gap-2">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Export History
+            </h3>
+            <div id="historyList" class="space-y-2 max-h-40 overflow-y-auto pr-1"></div>
+        </div>
+    </main>
 
     <script>
-        window.onload = () => renderHistoryUI('Social Resizer');
+        let currentFile = null;
 
-        const SIZES = [
-            { name: 'Instagram_Post', w: 1080, h: 1080 },
-            { name: 'Instagram_Story', w: 1080, h: 1920 },
-            { name: 'YouTube_Thumbnail', w: 1280, h: 720 },
-            { name: 'Facebook_Post', w: 1200, h: 630 }
+        window.onload = () => {
+            if(typeof renderHistoryUI === 'function') renderHistoryUI('Social Resizer');
+            setupDragAndDrop();
+        };
+
+        const SIZES =[
+            { name: '1_Instagram_Post_1080x1080', w: 1080, h: 1080 },
+            { name: '2_Story_Reels_1080x1920', w: 1080, h: 1920 },
+            { name: '3_YouTube_Thumb_1280x720', w: 1280, h: 720 },
+            { name: '4_Link_Banner_1200x630', w: 1200, h: 630 }
         ];
 
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('dropZone');
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-fuchsia-400', 'bg-fuchsia-900/20'); });
+            dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('border-fuchsia-400', 'bg-fuchsia-900/20'); });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-fuchsia-400', 'bg-fuchsia-900/20');
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    document.getElementById('imageInput').files = e.dataTransfer.files;
+                    handleImageLoad(document.getElementById('imageInput'));
+                }
+            });
+        }
+
+        function handleImageLoad(input) {
+            if (!input.files[0]) return;
+            currentFile = input.files[0];
+            
+            const objUrl = URL.createObjectURL(currentFile);
+            const boxes = document.querySelectorAll('.preview-box');
+            
+            boxes.forEach(box => {
+                box.querySelector('img').src = objUrl;
+                box.classList.add('has-image');
+            });
+
+            document.getElementById('resizeBtn').disabled = false;
+            
+            // Tweak UI Text
+            const dropLabel = document.querySelector('#dropZone span.font-bold');
+            dropLabel.innerText = currentFile.name;
+            dropLabel.classList.replace('text-slate-300', 'text-fuchsia-400');
+        }
+
+        function clearImage() {
+            currentFile = null;
+            document.getElementById('imageInput').value = "";
+            const boxes = document.querySelectorAll('.preview-box');
+            boxes.forEach(box => {
+                box.querySelector('img').src = "";
+                box.classList.remove('has-image');
+            });
+            document.getElementById('resizeBtn').disabled = true;
+            
+            const dropLabel = document.querySelector('#dropZone span.font-bold');
+            dropLabel.innerText = "Select Master Image";
+            dropLabel.classList.replace('text-fuchsia-400', 'text-slate-300');
+        }
+
         async function resizeSocial() {
-            const file = document.getElementById('imageInput').files[0];
             const btn = document.getElementById('resizeBtn');
-            if(!file) return alert("Choose a photo first.");
+            const status = document.getElementById('processStatus');
+            if(!currentFile) return alert("Choose a photo first.");
 
             btn.disabled = true;
-            btn.innerText = "Processing images…";
+            btn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Zipping Graphics...`;
+            status.classList.remove('hidden');
 
             try {
                 const zip = new JSZip();
-                const img = await loadImage(file);
+                const img = await loadImage(currentFile);
 
                 for (const size of SIZES) {
                     const canvas = document.createElement('canvas');
@@ -82,17 +243,24 @@
                     canvas.height = size.h;
                     const ctx = canvas.getContext('2d');
 
+                    // Smart Center Crop Logic
                     const ratio = Math.max(size.w / img.width, size.h / img.height);
-                    const x = (size.w - img.width * ratio) / 2;
-                    const y = (size.h - img.height * ratio) / 2;
-                    ctx.drawImage(img, x, y, img.width * ratio, img.height * ratio);
+                    const drawWidth = img.width * ratio;
+                    const drawHeight = img.height * ratio;
+                    const x = (size.w - drawWidth) / 2;
+                    const y = (size.h - drawHeight) / 2;
+                    
+                    ctx.drawImage(img, x, y, drawWidth, drawHeight);
 
-                    const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.9));
+                    const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.95)); // Quality 95 for Social
                     zip.file(`${size.name}.jpg`, blob);
+                    
+                    // Jeda mikro agar UI tidak freeze
+                    await new Promise(resolve => setTimeout(resolve, 50));
                 }
 
                 const zipBlob = await zip.generateAsync({type: "blob"});
-                const finalFileName = `Social_Pack_${file.name.split('.')[0]}.zip`;
+                const finalFileName = `SocialPack_${currentFile.name.split('.')[0].replace(/[^a-zA-Z0-9]/g, '_')}.zip`;
 
                 if (typeof addToHistory === 'function') {
                     const historyId = await addToHistory('Social Resizer', finalFileName, zipBlob);
@@ -102,9 +270,10 @@
                 }
 
             } catch (error) {
-                alert("Could not process the image.");
+                alert("Could not process the image. The file might be corrupted.");
+                status.classList.add('hidden');
                 btn.disabled = false;
-                btn.innerText = "Process & download all (ZIP)";
+                btn.innerHTML = "Process & Download ZIP";
             }
         }
 
@@ -117,41 +286,39 @@
         }
     </script>
 
-<!-- SEO CONTENT AREA -->
-<section class="py-16 bg-slate-50 border-t border-slate-200">
-    <div class="container mx-auto px-4 max-w-4xl prose prose-slate">
-        
-        <h2 class="text-2xl font-bold text-slate-800 mb-4">What is Social Media Image Resizer?</h2>
-        <p class="text-sm text-slate-600 mb-6 leading-relaxed">
-            Social Media Image Resizer automatically crops and resizes a single image to fit the optimal dimensions for Instagram, YouTube, and Facebook. Uses intelligent center-cropping to ensure important content remains visible across all platforms.
-        </p>
+    <!-- SEO CONTENT AREA -->
+    <section class="py-16 bg-slate-50 border-t border-slate-200 mt-12 text-slate-800 -mx-4 px-4 lg:mx-0 lg:px-0 lg:rounded-3xl lg:mb-12 z-10 relative">
+        <div class="container mx-auto max-w-4xl prose prose-slate">
+            
+            <h2 class="text-3xl font-black text-slate-900 mb-6 tracking-tight">Content Repurposing Automation</h2>
+            <p class="text-sm md:text-base text-slate-600 mb-6 leading-relaxed">
+                As a Social Media Manager or Content Creator, formatting a single campaign image to fit the strict aspect ratio guidelines of Instagram, YouTube, and LinkedIn can take up valuable design time. The <strong>MARK_Tools Social Media Bulk Resizer</strong> automates this workflow. Upload one master image, and our client-side Canvas API will automatically slice, crop, and package all standard social formats into a single, downloadable ZIP file in under 3 seconds.
+            </p>
 
-        <h2 class="text-2xl font-bold text-slate-800 mb-4">How to Use This Tool</h2>
-        <ol class="list-decimal pl-5 text-sm text-slate-600 mb-8 space-y-2">
-            <li><strong>Upload Image:</strong> Select your source image file.</li>
-            <li><strong>Review Sizes:</strong> Check the target dimensions for each platform.</li>
-            <li><strong>Process:</strong> Click "Process & download all" to generate all formats.</li>
-            <li><strong>Download:</strong> Receive a ZIP file with all resized images.</li>
-        </ol>
+            <div class="bg-fuchsia-50 p-6 rounded-2xl border border-fuchsia-100 shadow-sm mb-12">
+                <h3 class="text-xl font-bold text-fuchsia-900 mb-3 flex items-center gap-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    Smart Center-Crop Algorithm
+                </h3>
+                <p class="text-sm text-fuchsia-800/80 leading-relaxed">
+                    Stretching or squeezing an image to fit a new size results in unprofessional, distorted graphics. Our tool employs a <strong>mathematical center-crop ratio algorithm</strong>. It calculates the necessary aspect ratio scaling factor and crops equally from the outer edges, ensuring the central focal point of your photo always remains perfectly intact and unpixelated.
+                </p>
+            </div>
 
-        <h2 class="text-2xl font-bold text-slate-800 mb-4">Frequently Asked Questions (FAQ)</h2>
-        <div class="space-y-4">
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h4 class="font-bold text-slate-800 mb-2">What are the exact platform specifications?</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">Instagram Post: 1080×1080px, Instagram Story: 1080×1920px, YouTube Thumbnail: 1280×720px, Facebook Post: 1200×630px.</p>
+            <h2 class="text-3xl font-black text-slate-900 mb-6 tracking-tight">Frequently Asked Questions</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+                <div class="border p-5 rounded-xl border-slate-200 bg-white shadow-sm hover:shadow-md transition">
+                    <h4 class="font-bold text-slate-800 text-lg mb-2">Are my marketing assets safe?</h4>
+                    <p class="text-sm text-slate-600">Yes. If you are handling unreleased product imagery or confidential campaign assets, our tool is perfectly safe. Resizing occurs strictly in your local browser environment. No files are uploaded to our servers.</p>
+                </div>
+                <div class="border p-5 rounded-xl border-slate-200 bg-white shadow-sm hover:shadow-md transition">
+                    <h4 class="font-bold text-slate-800 text-lg mb-2">What format are the images exported in?</h4>
+                    <p class="text-sm text-slate-600">All slices are exported as <strong>high-quality JPEG files (0.95 Quality Factor)</strong>, which strikes the perfect balance between crisp image fidelity and fast upload speeds on social platforms.</p>
+                </div>
             </div>
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h4 class="font-bold text-slate-800 mb-2">How does the center-crop algorithm work?</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">The algorithm crops from the center outward, ensuring the most important central content is preserved while fitting platform requirements.</p>
-            </div>
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h4 class="font-bold text-slate-800 mb-2">How are the downloaded files organized?</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">Files are clearly named (e.g., instagram_post.jpg, youtube_thumbnail.jpg) and bundled in a ZIP for easy organization.</p>
-            </div>
+
         </div>
-
-    </div>
-</section>
+    </section>
 
 </body>
 </html>

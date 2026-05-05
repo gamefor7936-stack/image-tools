@@ -1,99 +1,301 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<title>JSON FORMATTER - Formatter and Minifier</title>
-<meta name="description" content="Free online JSON Formatter and Minifier. Pretty-print messy JSON code for easy reading, or compress it to save space.">
-<link rel="icon" type="image/png" href="../favicon.png">
-<link rel="apple-touch-icon" href="../favicon.png">
-<meta property="og:image" content="https://marktoolbox.com/favicon.png">
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="../js/history.js"></script>
+    <meta charset="utf-8"/>
+    <title>JSON Formatter & Minifier</title>
+    <meta name="description" content="Free online JSON Formatter and Minifier. Pretty-print messy JSON code for easy reading, compress it to save space, and validate syntax entirely offline.">
+    <link rel="icon" type="image/png" href="../favicon.png">
+    <link rel="apple-touch-icon" href="../favicon.png">
+    <meta property="og:image" content="https://marktoolbox.com/favicon.png">
+    
+    <!-- Framework & Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../js/main.js"></script>
+    <script src="../js/history.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .glass-dark { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+        
+        /* Textarea Custom Scrollbar & Highlight */
+        textarea {
+            background-color: #0f172a;
+            color: #34d399; /* Emerald 400 */
+            border: 1px solid #334155;
+            transition: all 0.3s;
+            tab-size: 4;
+        }
+        textarea:focus { border-color: #10b981; outline: none; box-shadow: 0 0 15px rgba(16, 185, 129, 0.1); }
+        textarea::-webkit-scrollbar { width: 10px; height: 10px; }
+        textarea::-webkit-scrollbar-track { background: #0f172a; border-radius: 8px; }
+        textarea::-webkit-scrollbar-thumb { background: #334155; border-radius: 8px; border: 2px solid #0f172a; }
+        textarea::-webkit-scrollbar-thumb:hover { background: #475569; }
+        
+        .drag-active { border-color: #10b981 !important; background-color: rgba(16, 185, 129, 0.05) !important; }
+    </style>
 </head>
-<body class="bg-gray-50 p-6">
-<div class="max-w-xl mx-auto">
-<a class="text-blue-500 text-sm mb-4 inline-block" href="/">← Back to home</a>
-<div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-<div class="mb-4 text-green-600 font-mono font-bold text-2xl">{ }</div>
-<h3 class="text-xl font-semibold mb-2">JSON Formatter</h3>
-<textarea class="w-full p-2 border rounded text-xs font-mono mb-2" id="jsonInput" placeholder="Paste minified or messy JSON here…" rows="4"></textarea>
-<div class="grid grid-cols-2 gap-2">
-<button class="bg-green-600 text-white py-2 rounded font-bold text-xs" onclick="formatJSON()">Pretty-print</button>
-<button class="bg-gray-700 text-white py-2 rounded font-bold text-xs" onclick="minifyJSON()">Minify</button>
-</div>
-</div>
-<section class="mt-12">
-<div class="flex items-center gap-2 mb-4 px-4">
-<svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<h3 class="font-bold text-slate-700">Recent history</h3>
-</div>
-<div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm" id="historyList">
-</div>
-</section>
-</div>
-<script>
+<body class="bg-[#0b1120] text-slate-300 min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-800">
+        <div class="container mx-auto px-6 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="/" class="text-emerald-500 font-black text-xl tracking-tighter hover:opacity-80 transition">MARK_Tools</a>
+                <span class="text-slate-600">|</span>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Developer / API</span>
+            </div>
+            <a href="/" class="text-xs font-bold text-slate-400 hover:text-emerald-500 transition">BACK TO HOME</a>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8 flex-grow flex flex-col lg:flex-row gap-6 max-w-7xl">
+        
+        <!-- LEFT: MAIN WORKSPACE -->
+        <div class="w-full lg:w-2/3 flex flex-col gap-6">
+            <div class="glass-dark p-6 md:p-8 rounded-3xl shadow-2xl relative border-t-4 border-t-emerald-500 flex flex-col h-full">
+                
+                <div class="flex items-start justify-between mb-6">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-2xl flex items-center justify-center font-mono font-black text-2xl">
+                            { }
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-black text-white tracking-tight">JSON Formatter</h1>
+                            <p class="text-[11px] text-slate-400 uppercase tracking-widest mt-1">Beautify, Minify & Validate</p>
+                        </div>
+                    </div>
+                    <button onclick="clearJSON()" class="text-[10px] font-bold text-slate-500 hover:text-red-400 uppercase tracking-widest transition flex items-center gap-1 bg-slate-800/50 px-3 py-1.5 rounded-lg">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        Clear
+                    </button>
+                </div>
+
+                <!-- Status & Error Output -->
+                <div id="statusBox" class="hidden mb-4 p-3 rounded-xl border font-mono text-xs font-bold break-words"></div>
+
+                <!-- Editor Area -->
+                <div class="relative flex-grow flex flex-col" id="dropZone">
+                    <textarea id="jsonInput" class="w-full h-[400px] md:h-[500px] p-5 rounded-2xl font-mono text-sm resize-y leading-relaxed shadow-inner" placeholder="Paste messy JSON string here...&#10;Or Drag & Drop a .json file directly into this box." spellcheck="false" oninput="updateStats()"></textarea>
+                    
+                    <!-- Floating Stats -->
+                    <div class="absolute bottom-4 right-4 flex items-center gap-2">
+                        <div id="byteSize" class="bg-slate-900/80 backdrop-blur text-emerald-400 border border-slate-700 px-3 py-1 rounded-lg text-[10px] font-mono font-bold tracking-widest shadow-lg">0 Bytes</div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-6">
+                    <button onclick="formatJSON()" class="bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest shadow-lg shadow-emerald-900/50 transition flex justify-center items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                        Pretty Print
+                    </button>
+                    <button onclick="minifyJSON()" class="bg-slate-700 hover:bg-slate-600 text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest shadow-lg shadow-slate-900/50 transition flex justify-center items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path></svg>
+                        Minify
+                    </button>
+                    <button onclick="copyJSON()" id="btnCopy" class="bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white border border-blue-600/50 py-4 rounded-xl font-black uppercase text-xs tracking-widest transition flex justify-center items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        Copy Output
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: SIDEBAR -->
+        <div class="w-full lg:w-1/3 flex flex-col gap-6">
+            
+            <div class="glass-dark p-6 rounded-3xl border border-slate-800">
+                <h3 class="text-sm font-black text-white mb-2">Export to File</h3>
+                <p class="text-xs text-slate-400 mb-4 leading-relaxed">Done structuring your data? Download the current JSON directly as a file.</p>
+                <button onclick="downloadJSON()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition flex justify-center items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Download .JSON
+                </button>
+            </div>
+
+            <!-- Area Histori -->
+            <div class="glass-dark p-6 rounded-3xl flex-grow hidden lg:block">
+                <h4 class="text-[10px] font-bold text-slate-400 uppercase mb-4 tracking-widest flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Export History
+                </h4>
+                <div id="historyList" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const inputArea = document.getElementById('jsonInput');
+        const statusBox = document.getElementById('statusBox');
+        const byteSize = document.getElementById('byteSize');
+        const dropZone = document.getElementById('dropZone');
+
+        window.onload = () => {
+            if(typeof renderHistoryUI === 'function') renderHistoryUI('JSON Formatter');
+            setupDragAndDrop();
+        };
+
+        function updateStats() {
+            const bytes = new Blob([inputArea.value]).size;
+            byteSize.innerText = formatBytes(bytes);
+            statusBox.classList.add('hidden'); // Sembunyikan error jika user mulai mengetik
+        }
+
+        function clearJSON() {
+            inputArea.value = '';
+            updateStats();
+            statusBox.classList.add('hidden');
+        }
+
+        function showStatus(message, isError) {
+            statusBox.classList.remove('hidden', 'bg-red-500/10', 'border-red-500/50', 'text-red-400', 'bg-emerald-500/10', 'border-emerald-500/50', 'text-emerald-400');
+            
+            if(isError) {
+                statusBox.classList.add('bg-red-500/10', 'border-red-500/50', 'text-red-400');
+                statusBox.innerHTML = `⚠️ VALIDATION ERROR: <br><span class="text-[10px] font-normal mt-1 block opacity-80">${message}</span>`;
+            } else {
+                statusBox.classList.add('bg-emerald-500/10', 'border-emerald-500/50', 'text-emerald-400');
+                statusBox.innerHTML = `✓ SUCCESS: <span class="font-normal opacity-80">${message}</span>`;
+            }
+        }
+
         function formatJSON() {
-            const input = document.getElementById('jsonInput');
+            if(!inputArea.value.trim()) return showStatus("Input is empty.", true);
             try {
-                const obj = JSON.parse(input.value);
-                input.value = JSON.stringify(obj, null, 4);
+                const obj = JSON.parse(inputArea.value);
+                inputArea.value = JSON.stringify(obj, null, 4);
+                updateStats();
+                showStatus("JSON is valid and formatted successfully.", false);
             } catch (e) {
-                alert("Invalid JSON: " + e.message);
+                showStatus(e.message, true);
             }
         }
 
         function minifyJSON() {
-            const input = document.getElementById('jsonInput');
+            if(!inputArea.value.trim()) return showStatus("Input is empty.", true);
             try {
-                const obj = JSON.parse(input.value);
-                input.value = JSON.stringify(obj);
+                const obj = JSON.parse(inputArea.value);
+                inputArea.value = JSON.stringify(obj);
+                updateStats();
+                showStatus("JSON compressed successfully.", false);
             } catch (e) {
-                alert("Invalid JSON.");
+                showStatus(e.message, true);
             }
         }
 
-        window.onload = () => {
-            renderHistoryUI('JSON Formatter');
-        };
+        async function copyJSON() {
+            if(!inputArea.value.trim()) return;
+            const btn = document.getElementById('btnCopy');
+            try {
+                await navigator.clipboard.writeText(inputArea.value);
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> COPIED!`;
+                btn.classList.add('bg-emerald-600', 'text-white', 'border-emerald-600');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalHtml;
+                    btn.classList.remove('bg-emerald-600', 'text-white', 'border-emerald-600');
+                }, 2000);
+            } catch (err) {
+                alert('Failed to copy text.');
+            }
+        }
+
+        async function downloadJSON() {
+            if(!inputArea.value.trim()) return alert("No JSON data to export.");
+            
+            // Validate before download
+            try {
+                JSON.parse(inputArea.value);
+            } catch(e) {
+                const proceed = confirm("Warning: Your JSON contains syntax errors. Do you still want to download it?");
+                if(!proceed) return;
+            }
+
+            const blob = new Blob([inputArea.value], { type: 'application/json' });
+            const fileName = `data_${Date.now().toString().slice(-6)}.json`;
+
+            if (typeof addToHistory === 'function') {
+                const historyId = await addToHistory('JSON Formatter', fileName, blob);
+                window.location.href = `../go.html?id=${historyId}`;
+            } else {
+                saveFile(URL.createObjectURL(blob), fileName);
+            }
+        }
+
+        // --- Drag & Drop File Reading ---
+        function setupDragAndDrop() {
+            inputArea.addEventListener('dragover', (e) => { e.preventDefault(); inputArea.classList.add('drag-active'); });
+            inputArea.addEventListener('dragleave', (e) => { e.preventDefault(); inputArea.classList.remove('drag-active'); });
+            inputArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                inputArea.classList.remove('drag-active');
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    const file = e.dataTransfer.files[0];
+                    if(file.type === "application/json" || file.name.endsWith(".json") || file.type.includes("text")) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            inputArea.value = event.target.result;
+                            updateStats();
+                            formatJSON(); // Auto format on drop
+                        };
+                        reader.readAsText(file);
+                    } else {
+                        showStatus("Please drop a valid .json or text file.", true);
+                    }
+                }
+            });
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024, dm = 2, sizes =['B', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
     </script>
-<script src="../js/main.js"></script>
 
-<!-- SEO CONTENT AREA -->
-<section class="py-16 bg-slate-50 border-t border-slate-200">
-    <div class="container mx-auto px-4 max-w-4xl prose prose-slate">
-        
-        <h2 class="text-2xl font-bold text-slate-800 mb-4">What is JSON Formatter?</h2>
-        <p class="text-sm text-slate-600 mb-6 leading-relaxed">
-            JSON Formatter beautifies and validates JSON data for easy reading and debugging. Pretty-print minified JSON or compress formatted JSON. Essential tool for developers working with APIs, configuration files, and data structures.
-        </p>
+    <!-- SEO CONTENT AREA -->
+    <section class="py-16 bg-slate-50 border-t border-slate-200 mt-12 text-slate-800 -mx-4 px-4 lg:mx-0 lg:px-0 lg:rounded-t-3xl z-10 relative">
+        <div class="container mx-auto px-4 max-w-4xl prose prose-slate">
+            
+            <h2 class="text-3xl font-black text-slate-900 mb-6 tracking-tight">Advanced JSON Beautifier & Minifier</h2>
+            <p class="text-sm md:text-base text-slate-600 mb-6 leading-relaxed">
+                Working with external APIs, managing webhooks, or modifying server configuration files often involves dealing with massive blocks of unreadable, minified JSON text. Our <strong>Client-Side JSON Formatter</strong> automatically parses, validates, and structurally formats your data with proper indentation, making debugging significantly easier. 
+            </p>
 
-        <h2 class="text-2xl font-bold text-slate-800 mb-4">How to Use This Tool</h2>
-        <ol class="list-decimal pl-5 text-sm text-slate-600 mb-8 space-y-2">
-            <li><strong>Paste JSON:</strong> Input minified or messy JSON data.</li>
-            <li><strong>Pretty-print:</strong> Click to format with proper indentation.</li>
-            <li><strong>Minify:</strong> Click to compress JSON into single line.</li>
-            <li><strong>Validate:</strong> Tool automatically checks JSON syntax.</li>
-        </ol>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-bold text-slate-800 mb-3 text-emerald-600">Zero-Trust Privacy</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        JSON files frequently contain sensitive information, such as API Access Tokens, Database Credentials, or Customer PII (Personally Identifiable Information). Because MARK_Tools runs 100% in your browser using JavaScript, <strong>your code is never uploaded to any external server</strong>. You can safely paste production database dumps here.
+                    </p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-bold text-slate-800 mb-3">Live Syntax Validation</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Missing a comma? Forgot to wrap a key in double quotes? Our engine performs strict standard validation. If your JSON structure is broken, the tool will intercept the error and display an exact diagnostic message, saving you hours of manual code hunting.
+                    </p>
+                </div>
+            </div>
 
-        <h2 class="text-2xl font-bold text-slate-800 mb-4">Frequently Asked Questions (FAQ)</h2>
-        <div class="space-y-4">
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h4 class="font-bold text-slate-800 mb-2">What is JSON?</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">JSON (JavaScript Object Notation) is a lightweight data format for storing and transporting data, commonly used in web APIs and configuration files.</p>
+            <h2 class="text-3xl font-black text-slate-900 mb-6 tracking-tight">Frequently Asked Questions</h2>
+            <div class="space-y-4">
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition hover:shadow-md">
+                    <h4 class="font-bold text-slate-800 mb-2">When should I Minify my JSON?</h4>
+                    <p class="text-sm text-slate-600 leading-relaxed">While "Pretty Print" is for human reading, "Minify" strips all unnecessary whitespace, spaces, and line breaks from the code. You should minify JSON before deploying configuration files to production or sending data payloads via HTTP requests to save bandwidth and improve API latency.</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition hover:shadow-md">
+                    <h4 class="font-bold text-slate-800 mb-2">Can I format nested stringified JSON?</h4>
+                    <p class="text-sm text-slate-600 leading-relaxed">Currently, the tool formats standard parent JSON objects. If a specific key contains a value that is a stringified JSON (wrapped in quotes with escaped characters like <code>\"</code>), it will remain stringified to prevent breaking your schema integrity.</p>
+                </div>
             </div>
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h4 class="font-bold text-slate-800 mb-2">When should I pretty-print vs minify?</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">Pretty-print for readability during development. Minify for production to reduce file size and improve loading speed.</p>
-            </div>
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h4 class="font-bold text-slate-800 mb-2">How do I fix JSON syntax errors?</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">Check for missing commas, quotes around strings, proper bracket matching, and valid data types. The tool will show specific error messages.</p>
-            </div>
+
         </div>
-
-    </div>
-</section>
+    </section>
 
 </body>
 </html>

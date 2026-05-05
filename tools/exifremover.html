@@ -1,146 +1,314 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8" />
-    <title>EXIF REMOVER - Image metadata remover</title>
-    <meta name="description" content="Protect your privacy by removing hidden EXIF metadata (GPS location, camera info) from your photos before sharing them online. Free and secure.">
+    <title>EXIF & Metadata Wiper</title>
+    <meta name="description" content="Protect your privacy by stripping hidden EXIF metadata (GPS coordinates, camera info, timestamps) from your images. 100% offline, zero data retention.">
     <link rel="icon" type="image/png" href="../favicon.png">
     <link rel="apple-touch-icon" href="../favicon.png">
     <meta property="og:image" content="https://marktoolbox.com/favicon.png">
+    
+    <!-- Framework & Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../js/main.js"></script>
     <script src="../js/history.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .glass-dark { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+        
+        /* Terminal Effect */
+        .terminal-box {
+            background-color: #020617;
+            border: 1px solid #1e293b;
+            color: #fb7185; /* Rose 400 */
+        }
+        .term-cursor {
+            display: inline-block; width: 8px; height: 14px; background: #fb7185;
+            animation: blink 1s step-end infinite;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    </style>
 </head>
 
-<body class="bg-gray-50 p-6">
-    <div class="max-w-xl mx-auto">
-        <a class="text-blue-500 text-sm mb-4 inline-block hover:underline font-medium" href="../index.html">← Back to
-            home</a>
+<body class="bg-[#0b1120] text-slate-300 min-h-screen flex flex-col">
 
-        <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-            <div class="mb-4 text-blue-800">
-                <svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.882 9.882L4.99 4.99m14.122 14.122l-4.99-4.99"
-                        stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                </svg>
+    <!-- Navbar -->
+    <nav class="bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-800">
+        <div class="container mx-auto px-6 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="/" class="text-rose-500 font-black text-xl tracking-tighter hover:opacity-80 transition">MARK_Tools</a>
+                <span class="text-slate-600">|</span>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Privacy / Security</span>
             </div>
+            <a href="/" class="text-xs font-bold text-slate-400 hover:text-rose-500 transition">BACK TO HOME</a>
+        </div>
+    </nav>
 
-            <h3 class="text-xl font-semibold mb-2">Exif Privacy Remover</h3>
-            <p class="text-[10px] text-gray-500 mb-4 uppercase tracking-widest">Strip EXIF metadata (GPS, camera model,
-                timestamps) for safer sharing.</p>
+    <main class="container mx-auto px-4 py-8 flex-grow flex flex-col lg:flex-row gap-6 max-w-6xl justify-center">
+        
+        <!-- MAIN TOOL WORKSPACE -->
+        <div class="w-full lg:w-2/3 flex flex-col gap-6">
+            
+            <div class="glass-dark p-6 md:p-8 rounded-3xl shadow-2xl relative border-t-4 border-t-rose-500">
+                
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="w-14 h-14 bg-rose-500/10 text-rose-500 border border-rose-500/20 rounded-2xl flex items-center justify-center">
+                        <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.882 9.882L4.99 4.99m14.122 14.122l-4.99-4.99"></path></svg>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-black text-white tracking-tight">EXIF Metadata Wiper</h1>
+                        <p class="text-[11px] text-slate-400 uppercase tracking-widest mt-1">Sanitize Images Before Uploading</p>
+                    </div>
+                </div>
 
-            <input accept="image/*"
-                class="block w-full text-sm mb-6 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-800 hover:file:bg-blue-100 cursor-pointer text-slate-500"
-                id="exifInput" type="file" />
+                <!-- Step 1: Upload Area -->
+                <div id="uploadSection" class="mb-4">
+                    <label id="dropZone" class="w-full py-12 border-2 border-dashed border-slate-600 hover:border-rose-500 rounded-2xl flex flex-col items-center justify-center cursor-pointer bg-[#0f172a]/50 hover:bg-rose-900/10 transition-all group">
+                        <svg class="w-12 h-12 text-slate-600 group-hover:text-rose-500 mb-4 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        <span class="text-sm font-bold text-slate-300 group-hover:text-white mb-1 transition">Select or Drop Photo</span>
+                        <span class="text-[10px] text-slate-500 uppercase tracking-widest">JPG, PNG, WEBP</span>
+                        <input accept="image/jpeg, image/png, image/webp" class="hidden" id="exifInput" type="file" onchange="handleImageLoad(this)" />
+                    </label>
+                </div>
 
-            <button
-                class="w-full bg-blue-800 text-white py-3.5 rounded-xl font-bold hover:bg-blue-900 transition-all shadow-lg shadow-blue-900/30 disabled:opacity-50"
-                id="exifBtn" onclick="removeExif()">
-                Remove Metadata & Save
-            </button>
+                <!-- Step 2: Analyzer Terminal (Hidden Initially) -->
+                <div id="analysisSection" class="hidden flex-col gap-6 animate-fade-in">
+                    
+                    <div class="flex gap-4 items-start bg-[#0f172a] p-4 rounded-xl border border-slate-800">
+                        <img id="imgPreview" src="" class="w-20 h-20 object-cover rounded-lg border border-slate-700 shadow-md">
+                        <div class="flex flex-col justify-center">
+                            <p id="fileName" class="text-sm font-bold text-white truncate max-w-[200px] md:max-w-[400px]">photo.jpg</p>
+                            <p id="fileSize" class="text-xs text-slate-500 font-mono mt-1">0 KB</p>
+                            <button onclick="resetApp()" class="text-[10px] text-red-400 hover:text-red-300 font-bold uppercase tracking-widest mt-2 text-left w-max">✕ Remove</button>
+                        </div>
+                    </div>
+
+                    <!-- Hacker Terminal Simulation -->
+                    <div class="terminal-box p-4 rounded-xl font-mono text-xs leading-relaxed shadow-inner h-32 overflow-hidden flex flex-col justify-end">
+                        <div id="termOutput" class="space-y-1">
+                            <!-- JS will inject fake logs here -->
+                        </div>
+                        <div class="mt-1 flex items-center">
+                            <span class="text-slate-500 mr-2">root@mark-tools:~#</span>
+                            <span class="text-rose-400" id="termStatus">Waiting for instruction...</span>
+                            <span class="term-cursor ml-1"></span>
+                        </div>
+                    </div>
+
+                    <button id="exifBtn" onclick="removeExif()" class="w-full bg-rose-600 hover:bg-rose-500 text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest shadow-lg shadow-rose-900/50 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        Sanitize Image & Save
+                    </button>
+                </div>
+            </div>
         </div>
 
-        <section class="mt-12">
-            <div class="flex items-center gap-2 mb-4 px-4">
-                <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"
-                        stroke-width="2"></path>
-                </svg>
-                <h3 class="font-bold text-slate-700 uppercase tracking-widest text-[10px]">Recent history</h3>
+        <!-- RIGHT: SIDEBAR HISTORY -->
+        <div class="w-full lg:w-1/3 flex flex-col gap-6">
+            <div class="glass-dark p-6 rounded-3xl hidden lg:block border border-slate-800">
+                <h4 class="text-[10px] font-bold text-slate-400 uppercase mb-4 tracking-widest flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Sanitized History
+                </h4>
+                <div id="historyList" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
             </div>
-            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm" id="historyList"></div>
-        </section>
-    </div>
+
+            <!-- Mini Warning Box -->
+            <div class="bg-rose-900/20 border border-rose-500/30 p-5 rounded-2xl">
+                <h4 class="text-rose-400 font-bold text-sm mb-2 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    Safety Notice
+                </h4>
+                <p class="text-xs text-rose-200/70 leading-relaxed">
+                    Social media sites like Twitter or Instagram automatically strip EXIF data. However, if you are uploading images to personal blogs, Discord, or sending them via Email/Telegram (as file), your raw metadata is fully exposed to receivers.
+                </p>
+            </div>
+        </div>
+
+    </main>
 
     <script>
-        async function removeExif() {
-            const input = document.getElementById('exifInput');
+        let originalFile = null;
+
+        window.onload = () => {
+            if (typeof renderHistoryUI === 'function') renderHistoryUI('Exif Privacy Remover');
+            setupDragAndDrop();
+        };
+
+        function setupDragAndDrop() {
+            const dropZone = document.getElementById('dropZone');
+            dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-rose-500', 'bg-rose-900/20'); });
+            dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('border-rose-500', 'bg-rose-900/20'); });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-rose-500', 'bg-rose-900/20');
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    document.getElementById('exifInput').files = e.dataTransfer.files;
+                    handleImageLoad(document.getElementById('exifInput'));
+                }
+            });
+        }
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024, dm = 2, sizes = ['B', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+        }
+
+        async function handleImageLoad(input) {
+            if (!input.files[0]) return;
+            originalFile = input.files[0];
+
+            if(!originalFile.type.startsWith('image/')) {
+                return alert("Please upload a valid image file.");
+            }
+
+            document.getElementById('uploadSection').classList.add('hidden');
+            document.getElementById('analysisSection').classList.replace('hidden', 'flex');
+            
+            document.getElementById('fileName').innerText = originalFile.name;
+            document.getElementById('fileSize').innerText = formatBytes(originalFile.size);
+            document.getElementById('imgPreview').src = URL.createObjectURL(originalFile);
+
+            simulateHackerScan();
+        }
+
+        // Fake Terminal Animation UX
+        async function simulateHackerScan() {
+            const term = document.getElementById('termOutput');
+            const status = document.getElementById('termStatus');
             const btn = document.getElementById('exifBtn');
-            if (!input.files[0]) return alert("Choose a photo first.");
+            
+            term.innerHTML = '';
+            status.innerText = 'Initializing scan...';
+            
+            const logs =[
+                `<span class="text-slate-500">[SYSTEM]</span> Reading binary headers...`,
+                `<span class="text-slate-500">[SYSTEM]</span> Searching for APP1 / EXIF markers...`,
+                `<span class="text-yellow-400">[WARN]</span> Device Signature identified.`,
+                `<span class="text-yellow-400">[WARN]</span> Timestamp & Software metadata found.`,
+                `<span class="text-red-500 font-bold">[ALERT]</span> Potential GPS Coordinates detected.`,
+            ];
+
+            for(let i=0; i<logs.length; i++) {
+                await new Promise(r => setTimeout(r, 400 + Math.random() * 300));
+                term.innerHTML += `<div>${logs[i]}</div>`;
+            }
+
+            status.innerText = 'Ready to sanitize target.';
+            status.classList.replace('text-rose-400', 'text-emerald-400');
+            btn.disabled = false;
+        }
+
+        function resetApp() {
+            location.reload();
+        }
+
+        async function removeExif() {
+            if (!originalFile) return;
+            
+            const btn = document.getElementById('exifBtn');
+            const status = document.getElementById('termStatus');
+            const term = document.getElementById('termOutput');
 
             btn.disabled = true;
-            btn.innerText = "STRIPPING METADATA...";
+            btn.innerHTML = `<svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> OVERWRITING BYTES...`;
+            
+            status.innerText = "Executing canvas sanitization protocol...";
+            status.classList.replace('text-emerald-400', 'text-rose-400');
+            term.innerHTML += `<div><span class="text-slate-500">[SYSTEM]</span> Stripping binary payloads...</div>`;
 
-            const file = input.files[0];
             const img = new Image();
             const reader = new FileReader();
 
             reader.onload = (e) => {
                 img.src = e.target.result;
                 img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext('2d');
+                    // Beri jeda UI biar animasi terminal kelihatan
+                    setTimeout(() => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
 
-                    // Menggambar ke canvas secara otomatis menghilangkan EXIF data
-                    ctx.drawImage(img, 0, 0);
+                        // Redraw image securely onto canvas (Drops all non-pixel metadata)
+                        ctx.drawImage(img, 0, 0);
 
-                    canvas.toBlob(async (blob) => {
-                        const fileName = `Cleaned_${file.name}`;
-
-                        try {
-                            // Cukup 1 baris ini untuk menyimpan ke history & lempar ke go.html
-                            await processRedirect('Exif Privacy Remover', fileName, blob);
-                            return; // Paksa berhenti di sini agar tidak ada yang error
-                        } catch (err) {
-                            console.error(err);
-                            alert("Gagal memproses gambar.");
-                        } finally {
-                            // Ini hanya dijalankan kalau redirectnya somehow gagal
-                            btn.disabled = false;
-                            btn.innerText = "Remove Metadata & Save";
+                        // Determine original mime type
+                        let mimeType = originalFile.type;
+                        if(mimeType !== 'image/jpeg' && mimeType !== 'image/png' && mimeType !== 'image/webp') {
+                            mimeType = 'image/jpeg'; // Fallback
                         }
-                    }, 'image/jpeg', 0.95);
+
+                        // Use max quality (1.0) to prevent degradation during stripping
+                        canvas.toBlob(async (blob) => {
+                            const fileName = `Sanitized_${originalFile.name}`;
+                            term.innerHTML += `<div><span class="text-emerald-400">[SUCCESS]</span> Image sanitized. Initiating download.</div>`;
+
+                            try {
+                                await new Promise(r => setTimeout(r, 600)); // Dramatic pause
+                                if (typeof processRedirect === 'function') {
+                                    await processRedirect('Exif Privacy Remover', fileName, blob);
+                                } else {
+                                    saveFile(URL.createObjectURL(blob), fileName);
+                                }
+                            } catch (err) {
+                                console.error(err);
+                                alert("Failed to process image.");
+                                btn.disabled = false;
+                                btn.innerHTML = "Sanitize Image & Save";
+                            }
+                        }, mimeType, 1.0);
+                    }, 800);
                 };
             };
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(originalFile);
         }
-
-        window.onload = () => {
-            if (typeof renderHistoryUI === 'function') renderHistoryUI('Exif Privacy Remover');
-        };
     </script>
-    <script src="../js/main.js"></script>
 
-<!-- SEO CONTENT AREA -->
-<section class="py-16 bg-slate-50 border-t border-slate-200">
-    <div class="container mx-auto px-4 max-w-4xl prose prose-slate">
-        
-        <h2 class="text-2xl font-bold text-slate-800 mb-4">What is EXIF Privacy Remover?</h2>
-        <p class="text-sm text-slate-600 mb-6 leading-relaxed">
-            EXIF Privacy Remover automatically strips hidden metadata from photos, including GPS coordinates, camera information, and timestamps. Protects your privacy by removing potentially sensitive location and device data before sharing images online.
-        </p>
+    <!-- SEO CONTENT AREA -->
+    <section class="py-16 bg-slate-50 border-t border-slate-200 mt-12 text-slate-800 -mx-4 px-4 lg:mx-0 lg:px-0 lg:rounded-t-3xl z-10 relative">
+        <div class="container mx-auto px-4 max-w-4xl prose prose-slate">
+            
+            <h2 class="text-3xl font-black text-slate-900 mb-6 tracking-tight">Protect Your Anonymity Online</h2>
+            <p class="text-sm md:text-base text-slate-600 mb-6 leading-relaxed">
+                Every time you snap a photo with your smartphone or digital camera, the device stealthily embeds a hidden block of text called <strong>EXIF (Exchangeable Image File Format) Data</strong> inside the image file. While useful for organizing galleries, this metadata is a massive privacy liability. The <strong>MARK_Tools Metadata Wiper</strong> uses an HTML5 Canvas Redraw protocol to mathematically strip away all hidden tags without degrading your image's visual quality.
+            </p>
 
-        <h2 class="text-2xl font-bold text-slate-800 mb-4">How to Use This Tool</h2>
-        <ol class="list-decimal pl-5 text-sm text-slate-600 mb-8 space-y-2">
-            <li><strong>Upload Photo:</strong> Select the image file containing EXIF data.</li>
-            <li><strong>Process:</strong> Click "Remove Metadata & Save" to strip all metadata.</li>
-            <li><strong>Download:</strong> Receive the cleaned image file, safe for sharing.</li>
-        </ol>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-bold text-slate-800 mb-3 text-rose-600">The Danger of OSINT</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Cybercriminals and stalkers use Open-Source Intelligence (OSINT) tools to extract EXIF data. A seemingly innocent photo of your cat can reveal the exact GPS coordinates (Latitude/Longitude) of your house, the exact second the photo was taken, and the specific model of iPhone or Android you own.
+                    </p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-bold text-slate-800 mb-3 text-blue-600">How Client-Side Wiping Works</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Unlike apps that require you to upload your photos to a server (ironically violating your privacy to "protect" it), our tool operates strictly in your browser. It copies the raw pixels of your photo onto a blank digital canvas, discarding the "container" that holds the metadata, and repacks it locally.
+                    </p>
+                </div>
+            </div>
 
-        <h2 class="text-2xl font-bold text-slate-800 mb-4">Frequently Asked Questions (FAQ)</h2>
-        <div class="space-y-4">
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h4 class="font-bold text-slate-800 mb-2">What is EXIF data and why remove it?</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">EXIF (Exchangeable Image File Format) contains metadata like GPS location, camera model, and timestamps. Removing it protects privacy and prevents location tracking.</p>
+            <h2 class="text-3xl font-black text-slate-900 mb-6 tracking-tight">Frequently Asked Questions</h2>
+            <div class="space-y-4">
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition hover:shadow-md">
+                    <h4 class="font-bold text-slate-800 mb-2">Will removing metadata lower the photo's quality?</h4>
+                    <p class="text-sm text-slate-600 leading-relaxed">No. Our engine is configured to export the sanitized image at maximum quality (1.0). The visual fidelity remains identical to the original photo; only the invisible background text is destroyed.</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition hover:shadow-md">
+                    <h4 class="font-bold text-slate-800 mb-2">Do social media platforms strip EXIF data automatically?</h4>
+                    <p class="text-sm text-slate-600 leading-relaxed">Major platforms like Instagram, Twitter (X), and Facebook strip metadata upon upload to save server space. However, if you upload the image to a personal WordPress blog, send it as a file attachment via Email, Discord, or Telegram, the receiver can download and view your full EXIF data. Always sanitize first.</p>
+                </div>
             </div>
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h4 class="font-bold text-slate-800 mb-2">What are the privacy implications of EXIF data?</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">EXIF can reveal your exact location, the device you used, and when photos were taken, potentially compromising personal privacy and security.</p>
-            </div>
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h4 class="font-bold text-slate-800 mb-2">How can I verify the metadata has been removed?</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">Use online EXIF viewers or photo properties to check the cleaned image. All metadata fields should be empty or removed.</p>
-            </div>
+
         </div>
-
-    </div>
-</section>
+    </section>
 
 </body>
-
 </html>
