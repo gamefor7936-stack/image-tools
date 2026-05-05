@@ -1,13 +1,14 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Universal Unit Converter - Network speeds, length, weight, time, and temperatures</title>
-    <meta name="description" content="All-in-one Universal Unit Converter. Instantly convert data storage (Bytes to GB), network speeds, length, weight, time, and temperatures.">
+    <title>Universal Unit Converter | MARK_Tools</title>
+    <meta name="description" content="All-in-one offline Universal Unit Converter. Instantly convert data storage, network speeds, length, weight, time, and temperatures accurately.">
     <link rel="icon" type="image/png" href="../favicon.png">
     <link rel="apple-touch-icon" href="../favicon.png">
     <meta property="og:image" content="https://marktoolbox.com/favicon.png">
+    
     <!-- Framework & Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="../js/main.js"></script>
@@ -17,17 +18,20 @@
     <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;700;900&display=swap');
         .font-mono { font-family: 'JetBrains Mono', monospace; }
         .font-sans { font-family: 'Inter', sans-serif; }
+        
         .glass-dark { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
         .term-input { background: #0f172a; border: 1px solid #334155; color: #38bdf8; font-family: 'JetBrains Mono', monospace; transition: all 0.3s; }
-        .term-input:focus { border-color: #38bdf8; box-shadow: 0 0 10px rgba(56, 189, 248, 0.2); outline: none; }
+        .term-input:focus { border-color: #38bdf8; box-shadow: 0 0 15px rgba(56, 189, 248, 0.2); outline: none; }
         
-        /* Hilangkan panah naik-turun pada input number */
+        /* Hide arrows on number input */
         input[type=number]::-webkit-inner-spin-button, 
         input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5016566217386822"
+     crossorigin="anonymous"></script>
 </head>
 <body class="bg-[#0b1120] text-slate-300 font-sans min-h-screen flex flex-col">
 
@@ -35,7 +39,7 @@
     <nav class="bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-800">
         <div class="container mx-auto px-6 h-16 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <a href="/" class="text-blue-400 font-black text-xl tracking-tighter hover:opacity-80">MARK_Tools</a>
+                <a href="/" class="text-blue-400 font-black text-xl tracking-tighter hover:opacity-80 transition">MARK_Tools</a>
                 <span class="text-slate-600">|</span>
                 <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Omnitool Calculator</span>
             </div>
@@ -43,60 +47,63 @@
         </div>
     </nav>
 
-    <main class="container mx-auto px-4 py-8 flex-grow flex flex-col lg:flex-row gap-6">
+    <main class="container mx-auto px-4 py-8 flex-grow flex flex-col lg:flex-row gap-6 max-w-7xl">
         
         <!-- LEFT COLUMN: CATEGORY & SETTINGS -->
         <div class="w-full lg:w-1/3 flex flex-col gap-6">
             
-            <div class="glass-dark p-6 rounded-3xl border-t-4 border-t-blue-500">
-                <div class="flex items-center gap-3 mb-6">
-                    <div class="w-10 h-10 bg-blue-500/20 text-blue-400 rounded-lg flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
+            <div class="glass-dark p-6 rounded-3xl border-t-4 border-t-blue-500 shadow-2xl">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="w-14 h-14 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-2xl flex items-center justify-center">
+                        <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" /></svg>
                     </div>
                     <div>
-                        <h1 class="text-lg font-bold text-white">Universal Converter</h1>
-                        <p class="text-[10px] text-slate-400 uppercase tracking-widest">All Units in the World</p>
+                        <h1 class="text-xl font-black text-white tracking-tight">Universal Converter</h1>
+                        <p class="text-[11px] text-slate-400 uppercase tracking-widest mt-1">Global Unit Metrics</p>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Select Unit Category</label>
-                    <div class="grid grid-cols-2 gap-2" id="categoryGrid">
-                        <!-- Tombol Kategori akan di-generate oleh JS -->
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Select Measurement Type</label>
+                    <div class="grid grid-cols-2 gap-3" id="categoryGrid">
+                        <!-- Buttons Generated by JS -->
                     </div>
                 </div>
             </div>
 
             <!-- Export Buttons -->
-            <div class="flex gap-3">
-                <button onclick="exportReport('pdf')" id="btnExportPdf" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-slate-900 py-3 rounded-xl font-black uppercase text-xs tracking-widest transition shadow-lg flex flex-col items-center justify-center gap-1 disabled:opacity-50">
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="exportReport('pdf')" id="btnExportPdf" class="bg-emerald-600 hover:bg-emerald-500 text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest transition shadow-lg shadow-emerald-900/50 flex flex-col items-center justify-center gap-1 disabled:opacity-50">
                     <span class="text-lg">📄</span> Export PDF
                 </button>
-                <button onclick="exportReport('word')" id="btnExportWord" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-black uppercase text-xs tracking-widest transition shadow-lg flex flex-col items-center justify-center gap-1 disabled:opacity-50">
+                <button onclick="exportReport('word')" id="btnExportWord" class="bg-indigo-600 hover:bg-indigo-500 text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest transition shadow-lg shadow-indigo-900/50 flex flex-col items-center justify-center gap-1 disabled:opacity-50">
                     <span class="text-lg">📝</span> Export Word
                 </button>
             </div>
             
-            <div class="glass-dark p-4 rounded-xl">
-                <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Conversion History</h4>
+            <div class="glass-dark p-6 rounded-3xl hidden lg:block border border-slate-800">
+                <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Conversion History
+                </h4>
                 <div id="historyList" class="space-y-2 max-h-40 overflow-y-auto pr-1"></div>
             </div>
         </div>
 
         <!-- RIGHT COLUMN: CONVERSION WORKSPACE -->
-        <div class="w-full lg:w-2/3 glass-dark rounded-3xl p-6 md:p-12 flex flex-col relative overflow-hidden">
+        <div class="w-full lg:w-2/3 glass-dark rounded-3xl p-6 md:p-12 flex flex-col relative overflow-hidden border border-slate-800 shadow-2xl">
             
             <div class="text-center mb-10">
                 <h2 id="activeCategoryTitle" class="text-3xl font-black text-white uppercase tracking-tight">DATA STORAGE</h2>
-                <p id="activeCategoryDesc" class="text-slate-400 text-sm mt-2">Bit, Byte, Kilobyte, hingga Petabyte.</p>
+                <p id="activeCategoryDesc" class="text-slate-400 text-sm mt-2 font-mono">Memory and file storage units.</p>
             </div>
 
-            <!-- Area Kalkulator Interaktif -->
-            <div class="bg-[#020617] p-6 md:p-10 rounded-2xl border border-slate-800 relative">
+            <!-- Interactive Calculator Area -->
+            <div class="bg-[#020617] p-6 md:p-10 rounded-2xl border border-slate-800 relative shadow-inner">
                 
-                <!-- Tombol Swap di Tengah -->
-                <button onclick="swapUnits()" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg shadow-blue-900/50 hover:bg-blue-500 transition-all z-10 hover:rotate-180 duration-500 border-4 border-[#020617]">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>
+                <!-- Center Swap Button -->
+                <button onclick="swapUnits()" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg shadow-blue-900/50 hover:bg-blue-500 transition-all z-10 hover:rotate-180 duration-500 border-4 border-[#020617]" title="Swap Units">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>
                 </button>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-8 relative">
@@ -107,36 +114,41 @@
                         <select id="unit1" class="w-full p-4 rounded-xl term-input text-sm appearance-none font-bold" onchange="convert(1)">
                             <!-- Options JS -->
                         </select>
-                        <input type="number" id="val1" class="w-full p-4 rounded-xl term-input text-3xl font-black bg-transparent border-b-2 border-slate-700 focus:border-blue-400 outline-none text-center" value="1" oninput="convert(1)">
+                        <input type="number" id="val1" class="w-full p-4 rounded-xl term-input text-3xl font-black bg-[#0f172a] border-b-2 border-slate-600 focus:border-blue-500 outline-none text-center shadow-inner" value="1" oninput="convert(1)">
                     </div>
 
-                    <!-- KOTAK 2 (Ke) -->
+                    <!-- BOX 2 (To) -->
                     <div class="space-y-4 mt-8 md:mt-0">
                         <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest">TO UNIT</label>
                         <select id="unit2" class="w-full p-4 rounded-xl term-input text-sm appearance-none font-bold" onchange="convert(2)">
                             <!-- Options JS -->
                         </select>
-                        <input type="number" id="val2" class="w-full p-4 rounded-xl term-input text-3xl font-black bg-transparent border-b-2 border-slate-700 focus:border-blue-400 outline-none text-center" oninput="convert(2)">
+                        <input type="number" id="val2" class="w-full p-4 rounded-xl term-input text-3xl font-black bg-[#0f172a] border-b-2 border-slate-600 focus:border-emerald-500 outline-none text-center shadow-inner" oninput="convert(2)">
                     </div>
 
                 </div>
             </div>
 
-            <!-- Rumus Formulasi -->
-            <div class="mt-8 bg-blue-900/10 border border-blue-500/20 p-4 rounded-xl text-center">
-                <p class="text-[10px] font-bold text-blue-400 uppercase tracking-widest mb-1">Formula Dasar</p>
-                <p id="formulaText" class="font-mono text-sm text-slate-300">1 Byte = 8 Bits</p>
+            <!-- Formula Output -->
+            <div class="mt-8 bg-[#0f172a] border border-slate-700 p-5 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <span class="flex h-3 w-3 relative">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                    </span>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Base Formula Matrix</p>
+                </div>
+                <p id="formulaText" class="font-mono text-sm font-bold text-blue-400 break-words text-center md:text-right">1 Byte = 8 Bits</p>
             </div>
 
         </div>
     </main>
 
     <script>
-        // --- COMPLETE UNITS DATABASE ---
-        // Format: { name: multiplier (relative to base unit) }
+        // --- COMPLETE UNITS DATABASE (English Translated) ---
         const unitDB = {
             data: {
-                title: "Data Storage (IT)", desc: "Memory and file storage units.", base: "Byte",
+                title: "Data Storage", desc: "Memory and file storage capacities.", base: "Byte",
                 units: {
                     "Bit (b)": 0.125, "Byte (B)": 1,
                     "Kilobyte (KB)": 1000, "Kibibyte (KiB)": 1024,
@@ -147,7 +159,7 @@
                 }
             },
             network: {
-                title: "Network Speed", desc: "Kecepatan transfer data jaringan (Bandwidth).", base: "bps",
+                title: "Network Speed", desc: "Network data transfer rates (Bandwidth).", base: "bps",
                 units: {
                     "Bits per sec (bps)": 1, "Kilobits per sec (Kbps)": 1000,
                     "Megabits per sec (Mbps)": 1e6, "Gigabits per sec (Gbps)": 1e9,
@@ -156,7 +168,7 @@
                 }
             },
             length: {
-                title: "Length & Distance", desc: "Length, distance, up to rare Astronomy units.", base: "Meter",
+                title: "Length & Dist.", desc: "Length, distance, up to astronomy units.", base: "Meter",
                 units: {
                     "Millimeter (mm)": 0.001, "Centimeter (cm)": 0.01, "Meter (m)": 1, "Kilometer (km)": 1000,
                     "Inch (in)": 0.0254, "Foot (ft)": 0.3048, "Yard (yd)": 0.9144, "Mile (mi)": 1609.34,
@@ -165,18 +177,18 @@
                 }
             },
             weight: {
-                title: "Mass & Weight", desc: "Berat benda dan massa internasional.", base: "Gram",
+                title: "Mass & Weight", desc: "International mass and weight measurements.", base: "Gram",
                 units: {
                     "Milligram (mg)": 0.001, "Gram (g)": 1, "Kilogram (kg)": 1000, "Metric Ton (t)": 1e6,
                     "Ounce (oz)": 28.3495, "Pound (lb)": 453.592, "Stone": 6350.29, "Slug": 14593.9
                 }
             },
             temperature: {
-                title: "Temperature", desc: "Suhu cuaca dan termodinamika.", special: true, // Temperatur pakai rumus beda
+                title: "Temperature", desc: "Weather and thermodynamic temperatures.", special: true, 
                 units: { "Celsius (°C)": "C", "Fahrenheit (°F)": "F", "Kelvin (K)": "K", "Reaumur (°R)": "R" }
             },
             time: {
-                title: "Time & Duration", desc: "Time, duration, up to Millennium.", base: "Second",
+                title: "Time Duration", desc: "Time, duration, up to millennium standard.", base: "Second",
                 units: {
                     "Nanosecond (ns)": 1e-9, "Microsecond (μs)": 1e-6, "Millisecond (ms)": 0.001,
                     "Second (s)": 1, "Minute (min)": 60, "Hour (h)": 3600, "Day (d)": 86400,
@@ -198,7 +210,7 @@
             const grid = document.getElementById('categoryGrid');
             Object.keys(unitDB).forEach(key => {
                 const btn = document.createElement('button');
-                btn.className = "cat-btn bg-slate-800 text-slate-400 p-3 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-700 hover:text-white transition text-left truncate";
+                btn.className = "cat-btn bg-[#020617] text-slate-400 p-4 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-800 hover:text-white transition text-left truncate border border-slate-800 shadow-sm";
                 btn.innerText = unitDB[key].title;
                 btn.onclick = () => loadCategory(key);
                 btn.id = "btnCat-" + key;
@@ -211,12 +223,19 @@
             const data = unitDB[key];
             
             // Update UI Active Category
-            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('bg-blue-600', 'text-white'));
-            document.getElementById('btnCat-' + key).classList.add('bg-blue-600', 'text-white');
+            document.querySelectorAll('.cat-btn').forEach(b => {
+                b.classList.remove('bg-blue-600', 'text-white', 'border-blue-500');
+                b.classList.add('bg-[#020617]', 'text-slate-400', 'border-slate-800');
+            });
+            
+            const activeBtn = document.getElementById('btnCat-' + key);
+            activeBtn.classList.remove('bg-[#020617]', 'text-slate-400', 'border-slate-800');
+            activeBtn.classList.add('bg-blue-600', 'text-white', 'border-blue-500');
+            
             document.getElementById('activeCategoryTitle').innerText = data.title;
             document.getElementById('activeCategoryDesc').innerText = data.desc;
 
-            // Isi Dropdown
+            // Populate Dropdowns
             const u1 = document.getElementById('unit1');
             const u2 = document.getElementById('unit2');
             u1.innerHTML = ""; u2.innerHTML = "";
@@ -226,7 +245,7 @@
                 u2.innerHTML += `<option value="${unitName}">${unitName}</option>`;
             });
 
-            // Set default (if there are more than 1 option)
+            // Set default offset for unit 2
             if(Object.keys(data.units).length > 1) u2.selectedIndex = 1;
 
             document.getElementById('val1').value = 1;
@@ -253,15 +272,15 @@
             const out2 = document.getElementById('val2');
             const formulaText = document.getElementById('formulaText');
 
-            // Handle kotak kosong
+            // Handle empty inputs
             if(sourceBox === 1 && isNaN(val1)) { out2.value = ""; return; }
             if(sourceBox === 2 && isNaN(val2)) { out1.value = ""; return; }
 
-            // Logika Khusus Suhu (Temperature)
+            // Special Logic for Temperature
             if (data.special) {
                 const type1 = data.units[name1];
                 const type2 = data.units[name2];
-                let tempC = 0; // Change to Celsius first
+                let tempC = 0; // Normalize to Celsius first
 
                 if (sourceBox === 1) {
                     if(type1==='C') tempC = val1;
@@ -284,11 +303,11 @@
                     else if(type1==='K') out1.value = formatNumber(tempC + 273.15);
                     else if(type1==='R') out1.value = formatNumber(tempC * 4/5);
                 }
-                formulaText.innerText = `Menggunakan rumus standar termodinamika.`;
+                formulaText.innerText = `Using standard thermodynamic formulas.`;
                 return;
             }
 
-            // Logika Multiplier Standar
+            // Standard Multiplier Logic
             const rate1 = data.units[name1];
             const rate2 = data.units[name2];
 
@@ -302,11 +321,11 @@
                 out1.value = formatNumber(result);
             }
 
-            // Display Formula
+            // Display Base Ratio Formula
             formulaText.innerText = `1 ${name1.split(' ')[0]} = ${formatNumber(rate1 / rate2)} ${name2.split(' ')[0]}`;
         }
 
-        // Helper menghilangkan koma berlebihan (misal: 0.1000000000001 -> 0.1)
+        // Helper to remove excessive floating point artifacts
         function formatNumber(num) {
             if(num === 0) return 0;
             return parseFloat(num.toPrecision(12)); 
@@ -325,10 +344,8 @@
             const u2 = document.getElementById('unit2').value;
             const formula = document.getElementById('formulaText').innerText;
 
-            const tableData = [
-                ['Category', catTitle],
-                ['Input Value', `${val1} ${u1}`],
-                ['Converted Result', `${val2} ${u2}`],
+            const tableData = [['Category', catTitle],
+                ['Input Value', `${val1} ${u1}`],['Converted Result', `${val2} ${u2}`],
                 ['Conversion Ratio', formula]
             ];
 
@@ -354,12 +371,12 @@
                     finalFileName = `Conversion_${catTitle.replace(/\s/g,'_')}.pdf`;
 
                 } else if (format === 'word') {
-                    if (typeof window.docx === 'undefined') throw new Error("Library docx not ready yet.");
+                    if (typeof window.docx === 'undefined') throw new Error("Docx library not loaded.");
 
                     const tableRows =[
                         new window.docx.TableRow({ tableHeader: true, children:[
-                            new window.docx.TableCell({ children:[new window.docx.Paragraph({text: "Parameter", bold: true})], shading: { fill: "2563eb" } }),
-                            new window.docx.TableCell({ children:[new window.docx.Paragraph({text: "Detail", bold: true})], shading: { fill: "2563eb" } })
+                            new window.docx.TableCell({ children:[new window.docx.Paragraph({text: "Parameter", bold: true, color: "ffffff"})], shading: { fill: "2563eb" } }),
+                            new window.docx.TableCell({ children:[new window.docx.Paragraph({text: "Detail", bold: true, color: "ffffff"})], shading: { fill: "2563eb" } })
                         ]}),
                         ...tableData.map(row => new window.docx.TableRow({
                             children:[
@@ -384,55 +401,59 @@
                 }
 
                 if (typeof addToHistory === 'function') {
-                    const historyId = await addToHistory('Converter', finalFileName, finalBlob);
+                    const historyId = await addToHistory('Universal Converter', finalFileName, finalBlob);
                     window.location.href = `../go.html?id=${historyId}`;
                 } else {
                     saveFile(URL.createObjectURL(finalBlob), finalFileName);
                 }
 
             } catch(e) {
-                alert("Export failed");
+                alert("Export failed: " + e.message);
+                console.error(e);
             } finally {
                 btnPdf.disabled = false; btnWord.disabled = false;
             }
         }
     </script>
 
-<!-- SEO CONTENT AREA -->
-<section class="py-16 bg-slate-50 border-t border-slate-200">
-    <div class="container mx-auto px-4 max-w-4xl prose prose-slate">
-        
-        <h2 class="text-2xl font-bold text-slate-800 mb-4">What is Universal Unit Converter?</h2>
-        <p class="text-sm text-slate-600 mb-6 leading-relaxed">
-            Universal Unit Converter handles all types of measurement conversions including data storage, network speeds, length, weight, time, and temperature. Essential calculator for developers, engineers, and anyone working with technical specifications.
-        </p>
+    <!-- SEO CONTENT AREA -->
+    <section class="py-16 bg-slate-50 border-t border-slate-200 mt-12 text-slate-800 -mx-4 px-4 lg:mx-0 lg:px-0 lg:rounded-t-3xl z-10 relative">
+        <div class="container mx-auto px-4 max-w-4xl prose prose-slate">
+            
+            <h2 class="text-3xl font-black text-slate-900 mb-6 tracking-tight">Offline Omnitool Calculator</h2>
+            <p class="text-sm md:text-base text-slate-600 mb-6 leading-relaxed">
+                Whether you are an IT engineer calculating database storage capacities in Petabytes, a web developer managing network bandwidth speeds, or a student solving thermodynamics equations, the <strong>MARK_Tools Universal Unit Converter</strong> provides instant mathematical accuracy. Our engine operates entirely in your browser using local Javascript matrices, ensuring lightning-fast results without pinging external APIs.
+            </p>
 
-        <h2 class="text-2xl font-bold text-slate-800 mb-4">How to Use This Tool</h2>
-        <ol class="list-decimal pl-5 text-sm text-slate-600 mb-8 space-y-2">
-            <li><strong>Select Category:</strong> Choose conversion type (Data, Speed, Length, etc.).</li>
-            <li><strong>Enter Value:</strong> Input the number to convert.</li>
-            <li><strong>Choose Units:</strong> Select source and target units.</li>
-            <li><strong>Export Receipt:</strong> Generate PDF or Word conversion reports.</li>
-        </ol>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-bold text-slate-800 mb-3 text-blue-600">Zero-Trust Privacy</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Why do you need an offline calculator? Because tracking algorithms on other websites log the exact technical parameters you search for to build ad profiles. By running mathematical arrays purely via HTML5, we guarantee that no one knows what confidential company data you are converting.
+                    </p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-bold text-slate-800 mb-3 text-emerald-600">Exportable Receipts</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Unique to MARK_Tools, you can generate professional PDF or Microsoft Word receipts for your conversions. This is incredibly useful for attaching standardized metric calculations to academic papers, engineering plans, or client invoices.
+                    </p>
+                </div>
+            </div>
 
-        <h2 class="text-2xl font-bold text-slate-800 mb-4">Frequently Asked Questions (FAQ)</h2>
-        <div class="space-y-4">
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h4 class="font-bold text-slate-800 mb-2">What unit categories are supported?</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">Data storage (bytes to TB), network speeds (bps to Gbps), length (mm to km), weight (mg to tons), time (seconds to years), and temperature (°C, °F, K, °R).</p>
+            <h2 class="text-3xl font-black text-slate-900 mb-6 tracking-tight">Frequently Asked Questions</h2>
+            <div class="space-y-4">
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition hover:shadow-md">
+                    <h4 class="font-bold text-slate-800 mb-2">What is the difference between Data Storage and Network Speed?</h4>
+                    <p class="text-sm text-slate-600 leading-relaxed">This is a common point of confusion. <strong>Data Storage</strong> is measured in Bytes (e.g., Megabyte/MB) representing file size. <strong>Network Speed</strong> is measured in bits (e.g., Megabits per second/Mbps). Since there are 8 bits in 1 Byte, a 100 Mbps internet connection actually downloads files at roughly 12.5 MB/s.</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition hover:shadow-md">
+                    <h4 class="font-bold text-slate-800 mb-2">How precise are the astronomical distance conversions?</h4>
+                    <p class="text-sm text-slate-600 leading-relaxed">Our matrix uses International System of Units (SI) standards. For instance, calculations involving Light Years and Parsecs utilize scientific notation extending up to 12 decimal points of precision via vanilla JavaScript engines.</p>
+                </div>
             </div>
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h4 class="font-bold text-slate-800 mb-2">How accurate are the conversions?</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">All conversions use standard international conversion rates and formulas. Temperature conversions follow thermodynamic standards.</p>
-            </div>
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h4 class="font-bold text-slate-800 mb-2">What's the difference between data and speed units?</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">Data units measure storage capacity. Speed units measure transfer rates (e.g., Mbps for internet speed vs MB for file size).</p>
-            </div>
+
         </div>
-
-    </div>
-</section>
+    </section>
 
 </body>
 </html>

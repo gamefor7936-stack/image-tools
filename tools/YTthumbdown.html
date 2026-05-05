@@ -1,122 +1,219 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<title>YT Thumbnail Downloader - Free YouTube Thumbnail Downloader</title>
-<meta name="description" content="Free YouTube Thumbnail Downloader. Quickly fetch and save high-resolution (HD) cover images from any YouTube video URL.">
-<link rel="icon" type="image/png" href="../favicon.png">
-<link rel="apple-touch-icon" href="../favicon.png">
-<meta property="og:image" content="https://marktoolbox.com/favicon.png">
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="../js/history.js"></script>
+    <meta charset="utf-8"/>
+    <title>YT Thumbnail Extractor - Download Cover Images | MARK_Tools</title>
+    <meta name="description" content="Free YouTube Thumbnail Downloader. Quickly fetch and save high-resolution (HD) cover images from any YouTube video URL. 100% client-side fetching without API limits.">
+    <link rel="icon" type="image/png" href="../favicon.png">
+    <link rel="apple-touch-icon" href="../favicon.png">
+    <meta property="og:image" content="https://marktoolbox.com/favicon.png">
+    
+    <!-- Framework & Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="../js/history.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;600;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        .glass-dark { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+        .input-dark { background: #0f172a; border: 1px solid #334155; color: #f87171; transition: all 0.3s; }
+        .input-dark:focus { border-color: #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.15); outline: none; }
+    </style>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5016566217386822"
+     crossorigin="anonymous"></script>
 </head>
-<body class="bg-gray-50 p-6">
-<div class="max-w-xl mx-auto">
-<a class="text-blue-500 text-sm mb-4 inline-block" href="/">← Back to home</a>
-<div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
-<div class="mb-4 text-red-600">
-<svg class="h-10 w-10" fill="none" stroke="currentColor font-bold" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-<path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-</svg>
-</div>
-<h3 class="text-xl font-semibold mb-2">YT Thumbnail Downloader</h3>
-<input class="w-full p-2 border rounded text-sm mb-4" id="ytUrl" placeholder="Paste a YouTube video URL" type="text"/>
-<div class="hidden mb-4" id="ytPreview">
-<img class="rounded-lg shadow-sm mb-2 w-full" id="thumbImg" src=""/>
-<button class="w-full bg-red-600 text-white py-2 rounded-lg font-bold" onclick="downloadThumb()">Download HD image</button>
-</div>
-<button class="w-full bg-gray-800 text-white py-2 rounded-lg font-bold" id="getThumbBtn" onclick="getYoutubeThumb()">Fetch thumbnail</button>
-</div>
-<section class="mt-12">
-<div class="flex items-center gap-2 mb-4 px-4">
-<svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-<h3 class="font-bold text-slate-700">Recent history</h3>
-</div>
-<div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm" id="historyList">
-</div>
-</section>
-</div>
-<script>
+<body class="bg-[#0b1120] text-slate-300 min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <nav class="bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-800">
+        <div class="container mx-auto px-6 h-16 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <a href="/" class="text-red-500 font-black text-xl tracking-tighter hover:opacity-80 transition">MARK_Tools</a>
+                <span class="text-slate-600">|</span>
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Media Extractor</span>
+            </div>
+            <a href="/" class="text-xs font-bold text-slate-400 hover:text-red-500 transition">BACK TO HOME</a>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-4 py-8 flex-grow flex flex-col lg:flex-row gap-6 max-w-6xl justify-center">
+        
+        <!-- MAIN TOOL WORKSPACE -->
+        <div class="w-full lg:w-2/3 flex flex-col gap-6">
+            
+            <div class="glass-dark p-6 md:p-8 rounded-3xl shadow-2xl relative border-t-4 border-t-red-600">
+                
+                <div class="flex items-center gap-4 mb-8">
+                    <div class="w-14 h-14 bg-red-600/10 text-red-500 border border-red-500/20 rounded-2xl flex items-center justify-center">
+                        <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-black text-white tracking-tight">YT Thumbnail Extractor</h1>
+                        <p class="text-[11px] text-slate-400 uppercase tracking-widest mt-1">Fetch HD Cover Images Instantly</p>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="relative mb-6">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                    </div>
+                    <input class="w-full pl-12 pr-4 py-4 rounded-xl input-dark text-sm font-mono" id="ytUrl" placeholder="Paste YouTube Video URL here..." type="text" onkeydown="if(event.key === 'Enter') getYoutubeThumb()"/>
+                </div>
+
+                <button class="w-full bg-red-600 hover:bg-red-500 text-white py-4 rounded-xl font-black uppercase text-xs tracking-widest shadow-lg shadow-red-900/50 transition flex items-center justify-center gap-2" id="getThumbBtn" onclick="getYoutubeThumb()">
+                    Extract Thumbnail
+                </button>
+
+                <!-- Error Message -->
+                <div id="errorMsg" class="hidden mt-4 p-4 bg-red-900/20 border border-red-500/30 rounded-xl text-red-400 text-xs font-mono text-center"></div>
+
+                <!-- Result Area -->
+                <div class="hidden mt-8 flex-col gap-4 animate-fade-in" id="ytPreview">
+                    <div class="bg-[#020617] p-2 rounded-2xl border border-slate-800 shadow-inner relative group">
+                        <img class="rounded-xl w-full object-cover aspect-video" id="thumbImg" src="" alt="YouTube Thumbnail Preview"/>
+                        <div class="absolute top-4 right-4 bg-black/70 backdrop-blur text-white px-3 py-1 rounded-lg text-[10px] font-black tracking-widest border border-slate-700">PREVIEW</div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+                        <button class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white py-3 rounded-xl font-bold uppercase text-[10px] tracking-widest transition flex items-center justify-center gap-2" onclick="downloadThumb('maxresdefault.jpg', 'HD')">
+                            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Download HD (1080p)
+                        </button>
+                        <button class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white py-3 rounded-xl font-bold uppercase text-[10px] tracking-widest transition flex items-center justify-center gap-2" onclick="downloadThumb('hqdefault.jpg', 'HQ')">
+                            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Download High (480p)
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: HISTORY -->
+        <div class="w-full lg:w-1/3 flex flex-col gap-6">
+            <div class="glass-dark p-6 rounded-3xl hidden lg:block border border-slate-800">
+                <h4 class="text-[10px] font-bold text-slate-400 uppercase mb-4 tracking-widest flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Recent Extractions
+                </h4>
+                <div id="historyList" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentVideoId = "";
+
         function getYoutubeThumb() {
-            const url = document.getElementById('ytUrl').value;
+            const url = document.getElementById('ytUrl').value.trim();
             const preview = document.getElementById('ytPreview');
             const img = document.getElementById('thumbImg');
             const btn = document.getElementById('getThumbBtn');
+            const errorMsg = document.getElementById('errorMsg');
 
-            const regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            // Advanced Regex to catch all variations of YT URLs
+            const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
             const match = url.match(regExp);
 
-            if (match && match[2].length == 11) {
-                const videoId = match[2];
-                const thumbUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+            if (match && match[1].length === 11) {
+                currentVideoId = match[1];
+                // Display MaxRes preview by default
+                img.src = `https://img.youtube.com/vi/${currentVideoId}/maxresdefault.jpg`;
                 
-                img.src = thumbUrl;
+                // If MaxRes is missing, fallback to HQ default using image onerror
+                img.onerror = function() {
+                    this.onerror = null;
+                    this.src = `https://img.youtube.com/vi/${currentVideoId}/hqdefault.jpg`;
+                };
+
+                errorMsg.classList.add('hidden');
                 preview.classList.remove('hidden');
-                btn.innerText = "Load another";
+                btn.innerHTML = `Fetch Another Thumbnail`;
             } else {
-                alert("Invalid YouTube URL. Example: https://www.youtube.com/watch?v=VIDEO_ID");
+                errorMsg.innerText = "Invalid URL. Please enter a valid YouTube video link.";
+                errorMsg.classList.remove('hidden');
                 preview.classList.add('hidden');
             }
         }
 
-        async function downloadThumb() {
-            const imgSrc = document.getElementById('thumbImg').src;
+        async function downloadThumb(resolution, qualityTag) {
+            if(!currentVideoId) return;
+            const imgSrc = `https://img.youtube.com/vi/${currentVideoId}/${resolution}`;
+            
             try {
+                // Try fetching directly (Some CDNs allow it, some might block via CORS)
                 const res = await fetch(imgSrc);
+                if (!res.ok) throw new Error("Image not found");
                 const blob = await res.blob();
+                
+                const fileName = `YT_Thumb_${currentVideoId}_${qualityTag}.jpg`;
+
                 if (typeof addToHistory === 'function') {
-                    const historyId = await addToHistory('YT Thumbnail Downloader', 'YT_Thumbnail_HD.jpg', blob);
+                    const historyId = await addToHistory('YT Thumbnail Downloader', fileName, blob);
                     window.location.href = `../go.html?id=${historyId}`;
                 } else {
-                    saveFile(URL.createObjectURL(blob), "YT_Thumbnail_HD.jpg");
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
                 }
             } catch (error) {
-                console.error('Error downloading thumbnail:', error);
+                console.error('Fetch failed, falling back to direct open:', error);
+                // Fallback if CORS blocks the fetch request
+                alert("Direct download blocked by browser security. The image will open in a new tab. Right-click or long-press to save it.");
+                window.open(imgSrc, '_blank');
             }
         }
 
         window.onload = () => {
-            renderHistoryUI('YT Thumbnail Downloader');
+            if(typeof renderHistoryUI === 'function') renderHistoryUI('YT Thumbnail Downloader');
         };
     </script>
-<script src="../js/main.js"></script>
+    <script src="../js/main.js"></script>
 
-<!-- SEO CONTENT AREA -->
-<section class="py-16 bg-slate-50 border-t border-slate-200">
-    <div class="container mx-auto px-4 max-w-4xl prose prose-slate">
-        
-        <h2 class="text-2xl font-bold text-slate-800 mb-4">What is YouTube Thumbnail Downloader?</h2>
-        <p class="text-sm text-slate-600 mb-6 leading-relaxed">
-            YouTube Thumbnail Downloader extracts high-resolution thumbnail images from any YouTube video URL. Get HD cover images instantly for content analysis, inspiration, or personal use.
-        </p>
+    <!-- SEO CONTENT AREA -->
+    <section class="py-16 bg-slate-50 border-t border-slate-200 mt-12 text-slate-800 -mx-4 px-4 lg:mx-0 lg:px-0 lg:rounded-t-3xl z-10 relative">
+        <div class="container mx-auto px-4 max-w-4xl prose prose-slate">
+            
+            <h2 class="text-3xl font-black text-slate-900 mb-6 tracking-tight">Client-Side Thumbnail Extractor</h2>
+            <p class="text-sm md:text-base text-slate-600 mb-6 leading-relaxed">
+                As a content creator, designer, or digital marketer, analyzing competitors' cover images is a crucial step in formulating a viral strategy. The <strong>YouTube Thumbnail Extractor</strong> allows you to bypass heavy API limits by fetching the raw thumbnail source images directly from YouTube's Content Delivery Network (CDN) to your browser.
+            </p>
 
-        <h2 class="text-2xl font-bold text-slate-800 mb-4">How to Use This Tool</h2>
-        <ol class="list-decimal pl-5 text-sm text-slate-600 mb-8 space-y-2">
-            <li><strong>Paste URL:</strong> Copy YouTube video URL and paste it.</li>
-            <li><strong>Fetch Thumbnail:</strong> Click to load the HD thumbnail.</li>
-            <li><strong>Preview:</strong> View the high-resolution image.</li>
-            <li><strong>Download:</strong> Save the thumbnail to your device.</li>
-        </ol>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-bold text-slate-800 mb-3 text-red-600">Zero Server Logs</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        Many thumbnail downloading sites log the URLs you search to build databases of trending videos. MARK_Tools operates entirely on your local machine using client-side JavaScript. Your search history remains strictly confidential and is never stored on our servers.
+                    </p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="text-xl font-bold text-slate-800 mb-3 text-blue-600">Multiple Resolutions</h3>
+                    <p class="text-sm text-slate-600 leading-relaxed">
+                        YouTube automatically generates multiple sizes for every uploaded cover. Our tool allows you to target specific resolutions, from the massive <strong>1080p Maximum Resolution (MaxRes)</strong> perfect for Photoshop compositing, down to the High-Quality (HQ) version ideal for lightweight reference.
+                    </p>
+                </div>
+            </div>
 
-        <h2 class="text-2xl font-bold text-slate-800 mb-4">Frequently Asked Questions (FAQ)</h2>
-        <div class="space-y-4">
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h4 class="font-bold text-slate-800 mb-2">What thumbnail quality do I get?</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">Downloads the highest available quality thumbnail (maxresdefault.jpg) which is typically 1280x720 pixels for HD videos.</p>
+            <h2 class="text-3xl font-black text-slate-900 mb-6 tracking-tight">Frequently Asked Questions</h2>
+            <div class="space-y-4">
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition hover:shadow-md">
+                    <h4 class="font-bold text-slate-800 mb-2">Why does the HD version sometimes fail to load?</h4>
+                    <p class="text-sm text-slate-600 leading-relaxed">If a video was uploaded in a lower resolution (e.g., 480p or 720p) or is very old, YouTube might not generate a 1080p <code>maxresdefault</code> image for it. In such rare cases, our tool will automatically detect the failure and fallback to the next highest available resolution.</p>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm transition hover:shadow-md">
+                    <h4 class="font-bold text-slate-800 mb-2">Are downloaded thumbnails copyright-free?</h4>
+                    <p class="text-sm text-slate-600 leading-relaxed">No. Thumbnail graphics are intellectually owned by the video creator or the respective broadcasting network. Downloading them is intended for personal reference, design study, or fair-use editorial commentary. Do not reuse them commercially without explicit permission.</p>
+                </div>
             </div>
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h4 class="font-bold text-slate-800 mb-2">Does this work with all YouTube URLs?</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">Yes, supports standard YouTube watch URLs, youtu.be short links, and embedded video URLs.</p>
-            </div>
-            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                <h4 class="font-bold text-slate-800 mb-2">Can I use downloaded thumbnails commercially?</h4>
-                <p class="text-sm text-slate-500 leading-relaxed">Thumbnails are copyrighted by the video creator. Use for personal reference only, not for commercial purposes without permission.</p>
-            </div>
+
         </div>
-
-    </div>
-</section>
+    </section>
 
 </body>
 </html>
